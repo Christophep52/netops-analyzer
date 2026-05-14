@@ -1,109 +1,173 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 /* ===========================================
-   NetOps Latency Analyzer — Realistic Design
-   Inspired by Grafana, Datadog, Zabbix
+   NetOps Latency Analyzer — "Beautifully Human" Monitoring Tool
+   Premium, data-dense, crisp typography, inspired by high-end dev tools
    =========================================== */
 
 @theme {
-  --color-bg: #181b1f;
-  --color-panel: #22252b;
-  --color-border: #303540;
-  --color-text: #c1c9d2;
-  --color-text-muted: #8e99a8;
-  --color-accent: #3274d9;
-  --color-success: #29a366;
-  --color-warning: #e09b24;
-  --color-danger: #e02f44;
+  --color-bg: #0b0f19; /* Deep cool dark */
+  --color-panel: #111827;
+  --color-panel-elevated: #1f2937;
+  
+  --color-border: #1e293b;
+  --color-border-hover: #334155;
+  
+  --color-text-main: #f8fafc;
+  --color-text-muted: #94a3b8;
+  --color-text-subtle: #64748b;
+  
+  --color-accent: #3b82f6;
+  --color-accent-soft: rgba(59, 130, 246, 0.15);
+  
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-  font-family: 'Inter', sans-serif;
-  background: var(--color-bg);
-  color: var(--color-text);
+  font-family: 'Inter', -apple-system, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text-main);
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
+  min-height: 100vh;
 }
 
+.font-mono { font-family: 'Roboto Mono', monospace; }
+
+/* --- Scrollbar --- */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-border-hover); }
+
 /* ===========================================
-   LAYOUT & PANELS
+   LAYOUT & CARDS
    =========================================== */
 
 .bg-grid {
-  /* Simple solid background, no grid */
-  background: var(--color-bg);
+  /* Subtle dot pattern for a technical feel */
+  background-image: radial-gradient(var(--color-border) 1px, transparent 1px);
+  background-size: 24px 24px;
 }
 
 .glass-card {
-  background: var(--color-panel);
+  background: rgba(17, 24, 39, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--color-border);
-  border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  border-radius: 12px;
+  box-shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.5);
 }
 
 .stat-card {
   background: var(--color-panel);
   border: 1px solid var(--color-border);
-  border-top: 3px solid var(--color-accent);
-  border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+.stat-card:hover {
+  border-color: var(--color-border-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* Subtle top accent line for stat cards */
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--color-border);
+  transition: background 0.2s ease;
+}
+.stat-card:hover::before {
+  background: var(--color-accent);
 }
 
 /* ===========================================
    TYPOGRAPHY & UTILS
    =========================================== */
 
-.font-mono {
-  font-family: 'Roboto Mono', monospace;
+.text-gradient {
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
 }
 
-/* Override the glow classes to be flat colors */
-.glow-blue { color: var(--color-accent); text-shadow: none; }
-.glow-green { color: var(--color-success); text-shadow: none; }
-.glow-amber { color: var(--color-warning); text-shadow: none; }
-.glow-red { color: var(--color-danger); text-shadow: none; }
-
-/* Status dots - solid, no pulse */
-.pulse-green { background: var(--color-success) !important; box-shadow: none !important; animation: none !important; }
-.pulse-amber { background: var(--color-warning) !important; box-shadow: none !important; animation: none !important; }
-.pulse-red { background: var(--color-danger) !important; box-shadow: none !important; animation: none !important; }
-
-.fade-in {
-  /* Remove animations for a more snappy dashboard feel */
-  animation: none;
+/* Status dots - refined pulse */
+.pulse-green { 
+  background: var(--color-success) !important; 
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4) !important;
+  animation: pulse-g 2s infinite cubic-bezier(0.66, 0, 0, 1) !important;
 }
+@keyframes pulse-g {
+  to { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+}
+
+.pulse-amber { 
+  background: var(--color-warning) !important; 
+  box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4) !important;
+  animation: pulse-a 2s infinite cubic-bezier(0.66, 0, 0, 1) !important;
+}
+@keyframes pulse-a {
+  to { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+}
+
+.pulse-red { 
+  background: var(--color-danger) !important; 
+  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4) !important;
+  animation: pulse-r 2s infinite cubic-bezier(0.66, 0, 0, 1) !important;
+}
+@keyframes pulse-r {
+  to { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+}
+
+/* Remove glow classes text-shadow overrides from App.jsx by forcing none here */
+.glow-blue { color: var(--color-accent); text-shadow: none !important; }
+.glow-green { color: var(--color-success); text-shadow: none !important; }
+.glow-amber { color: var(--color-warning); text-shadow: none !important; }
+.glow-red { color: var(--color-danger); text-shadow: none !important; }
 
 /* ===========================================
-   RECHARTS OVERRIDES
+   RECHARTS OVERRIDES (Premium Tooltip & Grid)
    =========================================== */
 
 .recharts-cartesian-grid-horizontal line,
 .recharts-cartesian-grid-vertical line {
   stroke: var(--color-border) !important;
-  stroke-dasharray: 0 !important;
+  stroke-dasharray: 4 4 !important;
 }
 
 .recharts-tooltip-wrapper {
-  filter: none;
+  outline: none;
 }
 
-.recharts-area {
-  filter: none;
+.recharts-default-tooltip {
+  background-color: var(--color-panel-elevated) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+  padding: 12px 16px !important;
 }
 
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: var(--color-bg); }
-::-webkit-scrollbar-thumb {
-  background: var(--color-border);
-  border-radius: 4px;
+.recharts-tooltip-label {
+  color: var(--color-text-muted) !important;
+  font-family: 'Roboto Mono', monospace !important;
+  font-size: 0.75rem !important;
+  margin-bottom: 8px !important;
+  text-transform: uppercase;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: #4a5161;
+
+.recharts-tooltip-item {
+  color: var(--color-text-main) !important;
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 500 !important;
+  font-size: 0.875rem !important;
+  padding: 2px 0 !important;
 }
