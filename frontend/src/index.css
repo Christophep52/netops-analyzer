@@ -1,25 +1,21 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
 /* ===========================================
-   NetOps Latency Analyzer — Design System v2
-   Premium dark SRE monitoring dashboard
+   NetOps Latency Analyzer — Realistic Design
+   Inspired by Grafana, Datadog, Zabbix
    =========================================== */
 
 @theme {
-  --color-dark-950: #030712;
-  --color-dark-900: #0c1222;
-  --color-dark-800: #131b2e;
-  --color-dark-700: #1c2640;
-  --color-dark-600: #263354;
-  --color-neon-blue: #3b82f6;
-  --color-neon-cyan: #06b6d4;
-  --color-neon-green: #10b981;
-  --color-neon-red: #ef4444;
-  --color-neon-amber: #f59e0b;
-  --color-neon-purple: #8b5cf6;
-  --color-border: rgba(59, 130, 246, 0.08);
-  --color-border-hover: rgba(59, 130, 246, 0.2);
+  --color-bg: #181b1f;
+  --color-panel: #22252b;
+  --color-border: #303540;
+  --color-text: #c1c9d2;
+  --color-text-muted: #8e99a8;
+  --color-accent: #3274d9;
+  --color-success: #29a366;
+  --color-warning: #e09b24;
+  --color-danger: #e02f44;
 }
 
 * {
@@ -29,200 +25,59 @@
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: var(--color-dark-950);
-  color: #e2e8f0;
+  font-family: 'Inter', sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
 }
 
 /* ===========================================
-   BACKGROUND
+   LAYOUT & PANELS
    =========================================== */
 
 .bg-grid {
-  position: relative;
-  background:
-    radial-gradient(ellipse 70% 50% at 15% 25%, rgba(59, 130, 246, 0.06) 0%, transparent 55%),
-    radial-gradient(ellipse 50% 40% at 85% 15%, rgba(6, 182, 212, 0.04) 0%, transparent 50%),
-    radial-gradient(ellipse 60% 35% at 50% 85%, rgba(139, 92, 246, 0.03) 0%, transparent 50%),
-    var(--color-dark-950);
+  /* Simple solid background, no grid */
+  background: var(--color-bg);
 }
-
-/* Grid pattern */
-.bg-grid::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* ===========================================
-   GLASSMORPHISM CARDS
-   =========================================== */
 
 .glass-card {
-  background: linear-gradient(135deg, rgba(19, 27, 46, 0.85), rgba(28, 38, 64, 0.65));
+  background: var(--color-panel);
   border: 1px solid var(--color-border);
-  border-radius: 18px;
-  backdrop-filter: blur(20px);
-  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
-
-.glass-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.15), rgba(6, 182, 212, 0.1), transparent);
-}
-
-.glass-card:hover {
-  border-color: var(--color-border-hover);
-  box-shadow:
-    0 0 40px -8px rgba(59, 130, 246, 0.1),
-    0 24px 64px -12px rgba(0, 0, 0, 0.35);
-  transform: translateY(-3px);
-}
-
-/* ===========================================
-   STAT CARDS
-   =========================================== */
 
 .stat-card {
-  background: linear-gradient(135deg, rgba(19, 27, 46, 0.9), rgba(28, 38, 64, 0.7));
+  background: var(--color-panel);
   border: 1px solid var(--color-border);
-  border-radius: 16px;
-  backdrop-filter: blur(16px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.stat-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--color-neon-blue), var(--color-neon-cyan));
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.stat-card:hover {
-  border-color: var(--color-border-hover);
-  box-shadow: 0 12px 40px -8px rgba(0, 0, 0, 0.25);
-  transform: translateY(-2px);
-}
-
-.stat-card:hover::before {
-  opacity: 1;
+  border-top: 3px solid var(--color-accent);
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 
 /* ===========================================
-   PULSING STATUS INDICATORS
+   TYPOGRAPHY & UTILS
    =========================================== */
 
-.pulse-green {
-  animation: pulse-green 2s ease-in-out infinite;
+.font-mono {
+  font-family: 'Roboto Mono', monospace;
 }
 
-.pulse-red {
-  animation: pulse-red 1.5s ease-in-out infinite;
-}
+/* Override the glow classes to be flat colors */
+.glow-blue { color: var(--color-accent); text-shadow: none; }
+.glow-green { color: var(--color-success); text-shadow: none; }
+.glow-amber { color: var(--color-warning); text-shadow: none; }
+.glow-red { color: var(--color-danger); text-shadow: none; }
 
-.pulse-amber {
-  animation: pulse-amber 1.8s ease-in-out infinite;
-}
-
-@keyframes pulse-green {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
-  50% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
-}
-
-@keyframes pulse-red {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
-  50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
-}
-
-@keyframes pulse-amber {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.5); }
-  50% { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
-}
-
-/* ===========================================
-   GLOW TEXT
-   =========================================== */
-
-.glow-blue {
-  text-shadow: 0 0 24px rgba(59, 130, 246, 0.45), 0 0 48px rgba(59, 130, 246, 0.15);
-}
-
-.glow-green {
-  text-shadow: 0 0 16px rgba(16, 185, 129, 0.5), 0 0 40px rgba(16, 185, 129, 0.15);
-}
-
-.glow-red {
-  text-shadow: 0 0 16px rgba(239, 68, 68, 0.5), 0 0 40px rgba(239, 68, 68, 0.15);
-}
-
-/* ===========================================
-   LOADING SPINNER
-   =========================================== */
-
-.spinner {
-  border: 3px solid rgba(59, 130, 246, 0.15);
-  border-top-color: #3b82f6;
-  border-radius: 50%;
-  width: 44px;
-  height: 44px;
-  animation: spin 0.8s linear infinite;
-  filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.3));
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* ===========================================
-   ANIMATIONS
-   =========================================== */
+/* Status dots - solid, no pulse */
+.pulse-green { background: var(--color-success) !important; box-shadow: none !important; animation: none !important; }
+.pulse-amber { background: var(--color-warning) !important; box-shadow: none !important; animation: none !important; }
+.pulse-red { background: var(--color-danger) !important; box-shadow: none !important; animation: none !important; }
 
 .fade-in {
-  animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(16px) scale(0.99); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-@keyframes gradient-shift {
-  0%   { background-position: 0% 50%; }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-/* ===========================================
-   SCROLLBAR
-   =========================================== */
-
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb {
-  background: var(--color-dark-600);
-  border-radius: 99px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-neon-blue);
+  /* Remove animations for a more snappy dashboard feel */
+  animation: none;
 }
 
 /* ===========================================
@@ -231,22 +86,24 @@ body {
 
 .recharts-cartesian-grid-horizontal line,
 .recharts-cartesian-grid-vertical line {
-  stroke: rgba(59, 130, 246, 0.06) !important;
+  stroke: var(--color-border) !important;
+  stroke-dasharray: 0 !important;
 }
 
 .recharts-tooltip-wrapper {
-  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.4));
+  filter: none;
 }
 
 .recharts-area {
-  filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.15));
+  filter: none;
 }
 
-/* ===========================================
-   SELECTION
-   =========================================== */
-
-::selection {
-  background: rgba(59, 130, 246, 0.25);
-  color: #f1f5f9;
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--color-bg); }
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #4a5161;
 }
