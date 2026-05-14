@@ -1,29 +1,31 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
 /* ===========================================
-   NetOps Latency Analyzer — "Beautifully Human" Monitoring Tool
-   Premium, data-dense, crisp typography, inspired by high-end dev tools
+   NetOps Latency Analyzer — "Mission Control" Design System
+   Deep blue cybernetic monitoring, inspired by Datadog & Grafana
    =========================================== */
 
 @theme {
-  --color-bg: #0b0f19; /* Deep cool dark */
-  --color-panel: #111827;
-  --color-panel-elevated: #1f2937;
-  
-  --color-border: #1e293b;
-  --color-border-hover: #334155;
-  
-  --color-text-main: #f8fafc;
-  --color-text-muted: #94a3b8;
-  --color-text-subtle: #64748b;
-  
+  --color-bg: #050a14;
+  --color-panel: #0a1120;
+  --color-panel-hover: #0f1830;
+  --color-surface: #111d33;
+  --color-border: #162040;
+  --color-border-hover: #1e2d55;
+  --color-text-main: #e8edf5;
+  --color-text-muted: #7b8fad;
+  --color-text-subtle: #4a6085;
   --color-accent: #3b82f6;
-  --color-accent-soft: rgba(59, 130, 246, 0.15);
-  
+  --color-accent-soft: rgba(59, 130, 246, 0.12);
+  --color-cyan: #06b6d4;
+  --color-cyan-soft: rgba(6, 182, 212, 0.1);
   --color-success: #10b981;
+  --color-success-soft: rgba(16, 185, 129, 0.1);
   --color-warning: #f59e0b;
+  --color-warning-soft: rgba(245, 158, 11, 0.1);
   --color-danger: #ef4444;
+  --color-danger-soft: rgba(239, 68, 68, 0.1);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -36,138 +38,105 @@ body {
   min-height: 100vh;
 }
 
-.font-mono { font-family: 'Roboto Mono', monospace; }
+.font-mono { font-family: 'JetBrains Mono', monospace; }
 
-/* --- Scrollbar --- */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-border-hover); }
 
-/* ===========================================
-   LAYOUT & CARDS
-   =========================================== */
-
+/* Background */
 .bg-grid {
-  /* Subtle dot pattern for a technical feel */
-  background-image: radial-gradient(var(--color-border) 1px, transparent 1px);
-  background-size: 24px 24px;
+  background-image:
+    radial-gradient(ellipse 80% 40% at 50% 0%, rgba(59,130,246,0.06), transparent),
+    radial-gradient(var(--color-border) 1px, transparent 1px);
+  background-size: 100% 100%, 22px 22px;
+  background-attachment: fixed;
 }
 
+/* Animations */
+@keyframes fadeUp { 0% { opacity: 0; transform: translateY(12px); } 100% { opacity: 1; transform: translateY(0); } }
+@keyframes pulseG { to { box-shadow: 0 0 0 6px rgba(16,185,129,0); } }
+@keyframes pulseA { to { box-shadow: 0 0 0 6px rgba(245,158,11,0); } }
+@keyframes pulseR { to { box-shadow: 0 0 0 6px rgba(239,68,68,0); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.fade-in { animation: fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) forwards; }
+.pulse-green { box-shadow: 0 0 0 0 rgba(16,185,129,0.4); animation: pulseG 2s infinite cubic-bezier(0.66,0,0,1); }
+.pulse-amber { box-shadow: 0 0 0 0 rgba(245,158,11,0.4); animation: pulseA 2s infinite cubic-bezier(0.66,0,0,1); }
+.pulse-red { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); animation: pulseR 2s infinite cubic-bezier(0.66,0,0,1); }
+
+.spinner {
+  width: 36px; height: 36px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* Cards */
 .glass-card {
-  background: rgba(17, 24, 39, 0.85);
+  background: rgba(10,17,32,0.85);
   backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--color-border);
-  border-radius: 12px;
-  box-shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.5);
+  border-radius: 14px;
+  box-shadow: 0 4px 24px -4px rgba(0,0,0,0.5);
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+.glass-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(59,130,246,0.1), transparent);
+}
+.glass-card:hover {
+  border-color: var(--color-border-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px -8px rgba(0,0,0,0.5);
 }
 
 .stat-card {
   background: var(--color-panel);
   border: 1px solid var(--color-border);
-  border-radius: 12px;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.2s ease;
+  border-radius: 14px;
+  position: relative; overflow: hidden;
+  transition: all 0.25s ease;
 }
-.stat-card:hover {
-  border-color: var(--color-border-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-}
-
-/* Subtle top accent line for stat cards */
 .stat-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: var(--color-border); transition: background 0.2s;
+}
+.stat-card:hover { border-color: var(--color-border-hover); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+.stat-card:hover::before { background: var(--color-accent); }
+
+/* Recharts */
+.recharts-cartesian-grid-horizontal line, .recharts-cartesian-grid-vertical line { stroke: var(--color-border) !important; }
+.recharts-tooltip-wrapper { outline: none; }
+
+/* Status health bar */
+.health-bar {
+  height: 4px; border-radius: 2px; overflow: hidden;
   background: var(--color-border);
-  transition: background 0.2s ease;
 }
-.stat-card:hover::before {
-  background: var(--color-accent);
-}
-
-/* ===========================================
-   TYPOGRAPHY & UTILS
-   =========================================== */
-
-.text-gradient {
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
+.health-fill {
+  height: 100%; border-radius: 2px;
+  transition: width 0.6s cubic-bezier(0.16,1,0.3,1);
 }
 
-/* Status dots - refined pulse */
-.pulse-green { 
-  background: var(--color-success) !important; 
-  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4) !important;
-  animation: pulse-g 2s infinite cubic-bezier(0.66, 0, 0, 1) !important;
+/* Summary table */
+.summary-table {
+  width: 100%; border-collapse: collapse; font-size: 0.78rem;
 }
-@keyframes pulse-g {
-  to { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+.summary-table th {
+  text-align: left; padding: 10px 16px; font-size: 0.65rem;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--color-text-subtle); font-weight: 600;
+  border-bottom: 1px solid var(--color-border);
 }
-
-.pulse-amber { 
-  background: var(--color-warning) !important; 
-  box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4) !important;
-  animation: pulse-a 2s infinite cubic-bezier(0.66, 0, 0, 1) !important;
+.summary-table td {
+  padding: 12px 16px; border-bottom: 1px solid rgba(22,32,64,0.5);
+  color: var(--color-text-main);
 }
-@keyframes pulse-a {
-  to { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
-}
-
-.pulse-red { 
-  background: var(--color-danger) !important; 
-  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4) !important;
-  animation: pulse-r 2s infinite cubic-bezier(0.66, 0, 0, 1) !important;
-}
-@keyframes pulse-r {
-  to { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
-}
-
-/* Remove glow classes text-shadow overrides from App.jsx by forcing none here */
-.glow-blue { color: var(--color-accent); text-shadow: none !important; }
-.glow-green { color: var(--color-success); text-shadow: none !important; }
-.glow-amber { color: var(--color-warning); text-shadow: none !important; }
-.glow-red { color: var(--color-danger); text-shadow: none !important; }
-
-/* ===========================================
-   RECHARTS OVERRIDES (Premium Tooltip & Grid)
-   =========================================== */
-
-.recharts-cartesian-grid-horizontal line,
-.recharts-cartesian-grid-vertical line {
-  stroke: var(--color-border) !important;
-  stroke-dasharray: 4 4 !important;
-}
-
-.recharts-tooltip-wrapper {
-  outline: none;
-}
-
-.recharts-default-tooltip {
-  background-color: var(--color-panel-elevated) !important;
-  border: 1px solid var(--color-border) !important;
-  border-radius: 8px !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
-  padding: 12px 16px !important;
-}
-
-.recharts-tooltip-label {
-  color: var(--color-text-muted) !important;
-  font-family: 'Roboto Mono', monospace !important;
-  font-size: 0.75rem !important;
-  margin-bottom: 8px !important;
-  text-transform: uppercase;
-}
-
-.recharts-tooltip-item {
-  color: var(--color-text-main) !important;
-  font-family: 'Inter', sans-serif !important;
-  font-weight: 500 !important;
-  font-size: 0.875rem !important;
-  padding: 2px 0 !important;
-}
+.summary-table tr { transition: background 0.15s; }
+.summary-table tr:hover { background: var(--color-panel-hover); }
