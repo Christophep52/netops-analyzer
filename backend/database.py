@@ -7,6 +7,7 @@ async def init_db():
     """Inicializa o banco de dados SQLite e cria a tabela de metricas."""
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("PRAGMA journal_mode=WAL;")
         await db.execute("""
             CREATE TABLE IF NOT EXISTS metrics (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -16,6 +17,7 @@ async def init_db():
                 status TEXT NOT NULL
             )
         """)
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_target_time ON metrics(target_ip, timestamp);")
         await db.commit()
 
 async def insert_metric(target_ip: str, latency_ms: float, status: str):
@@ -55,3 +57,9 @@ async def get_summary():
         """)
         rows = await cursor.fetchall()
         return [dict(row) for row in rows]
+
+async def cleanup_old_metrics(days: int = 7):
+    """Remove métricas mais antigas que o número de dias especificado para evitar crescimento ilimitado."""
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute(f"DELETE FROM metrics WHERE timestamp < datetime('now', '-{int(days)} days')")
+        await db.commit()

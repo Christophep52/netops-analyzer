@@ -23,7 +23,7 @@
                          ▼
 ┌──────────────────────────────────────────────────────────────┐
 │                 BACKEND (FastAPI / ASGI)                       │
-│     asyncio.create_subprocess_shell · 10 Pings Paralelos      │
+│  asyncio.create_subprocess_exec (Secure) · 10 Pings Paralelos  │
 └──────┬───────────────────────────────────────────┬───────────┘
        ▼                                           ▼
 ┌────────────┐                            ┌──────────────────┐
@@ -58,11 +58,11 @@ Dashboard com toggle entre **Grid de Cards** (com gráficos Recharts por nó) e 
 ### 2. ICMP Rootless no Docker
 Protocolo ICMP sem `--privileged` via `sysctls` (`net.ipv4.ping_group_range`) e imagens Debian slim com ping DGRAM.
 
-### 3. Coleta Assíncrona Não-Bloqueante
-Pool de subprocessos via `asyncio.create_subprocess_shell` — 10 nós em paralelo, sem travar a API FastAPI.
+### 3. Coleta Assíncrona Não-Bloqueante & Segura
+Pool de subprocessos via `asyncio.create_subprocess_exec` sem uso de shell (prevenindo injeção de comando) com timeouts resilientes — 10 nós em paralelo, sem travar a API FastAPI.
 
-### 4. Persistência Assíncrona
-`aiosqlite` para evitar bloqueio de I/O de disco do SQLite no ecossistema async do Python.
+### 4. Persistência Assíncrona Escalável
+Uso de `aiosqlite` com `PRAGMA journal_mode=WAL;` e índices para suportar acesso altamente concorrente (leituras e gravações assíncronas simultâneas). O sistema inclui uma rotina autônoma de `cleanup` para retenção dos últimos 7 dias.
 
 ### 5. Detecção Automática de OS
 Regex unificado que parseia `time=` (Linux) e `tempo=` (Windows) — portabilidade total entre dev e prod.
