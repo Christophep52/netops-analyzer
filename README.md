@@ -12,6 +12,17 @@
 
 ---
 
+## 📌 Destaque para Recrutadores & Liderança Técnica
+
+Este projeto foi projetado sob os pilares modernos de **Site Reliability Engineering (SRE), Segurança Cloud-Native e Alta Concorrência**:
+
+* 🛡️ **Segurança Rootless em Containers:** Diferente de monitores de rede tradicionais que exigem permissões de root (`--privileged`), este sistema utiliza o recurso avançado `net.ipv4.ping_group_range` via `sysctls` do Linux no Docker. Isso zera a superfície de ataque para escalada de privilégios em ambientes Kubernetes e Cloud.
+* ⚡ **Arquitetura Assíncrona Não-Bloqueante:** Construído em cima do **FastAPI e Python AsyncIO (`create_subprocess_exec`)**, realizando verificações de latência e perda de pacotes em 10 nós globais simultaneamente sem travar a thread principal ou saturar o event loop.
+* 📈 **Persistência Concorrente com SQLite WAL:** Para evitar gargalos de I/O em gravações de telemetria de alta frequência, o banco utiliza **Write-Ahead Logging (WAL)**, permitindo leituras analíticas pesadas no dashboard em tempo real enquanto os workers continuam gravando dados sem lock.
+* 🔧 **Observabilidade & Portabilidade:** UI reativa em **React 19 + Recharts** com visões duplas (Grid de Cards para análise granular de jitter e Tabela Sumário para visão executiva de SLA/Uptime).
+
+---
+
 ## 🏗️ Arquitetura
 
 ```
