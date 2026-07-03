@@ -14,12 +14,12 @@
 
 ## 📌 Destaque para Recrutadores & Liderança Técnica
 
-Este projeto foi projetado sob os pilares modernos de **Site Reliability Engineering (SRE), Segurança Cloud-Native e Alta Concorrência**:
+Este projeto implementa práticas fundamentais de **Site Reliability Engineering (SRE), Segurança em Nuvem e Processamento Assíncrono**:
 
-* 🛡️ **Segurança Rootless em Containers:** Diferente de monitores de rede tradicionais que exigem permissões de root (`--privileged`), este sistema utiliza o recurso avançado `net.ipv4.ping_group_range` via `sysctls` do Linux no Docker. Isso zera a superfície de ataque para escalada de privilégios em ambientes Kubernetes e Cloud.
-* ⚡ **Arquitetura Assíncrona Não-Bloqueante:** Construído em cima do **FastAPI e Python AsyncIO (`create_subprocess_exec`)**, realizando verificações de latência e perda de pacotes em 10 nós globais simultaneamente sem travar a thread principal ou saturar o event loop.
-* 📈 **Persistência Concorrente com SQLite WAL:** Para evitar gargalos de I/O em gravações de telemetria de alta frequência, o banco utiliza **Write-Ahead Logging (WAL)**, permitindo leituras analíticas pesadas no dashboard em tempo real enquanto os workers continuam gravando dados sem lock.
-* 🔧 **Observabilidade & Portabilidade:** UI reativa em **React 19 + Recharts** com visões duplas (Grid de Cards para análise granular de jitter e Tabela Sumário para visão executiva de SLA/Uptime).
+* 🛡️ **Segurança Rootless em Containers:** Diferente de monitores de rede tradicionais que exigem permissões de root (`--privileged`), este sistema utiliza o recurso avançado `net.ipv4.ping_group_range` via `sysctls` do Linux no Docker. Isso elimina a superfície de ataque para escalada de privilégios em ambientes Kubernetes e Cloud.
+* ⚡ **Arquitetura Assíncrona Não-Bloqueante:** Construído com **FastAPI e Python AsyncIO (`create_subprocess_exec`)**, realizando verificações de latência e perda de pacotes em 10 nós globais simultaneamente sem bloquear a thread principal ou saturar o event loop.
+* 📈 **Persistência Concorrente com SQLite WAL:** Para evitar gargalos de I/O em gravações de telemetria de alta frequência, o banco utiliza **Write-Ahead Logging (WAL)**, permitindo leituras analíticas pesadas no dashboard enquanto os workers continuam gravando dados em paralelo.
+* 🔧 **Observabilidade & Portabilidade:** Interface reativa desenvolvida em **React 19 + Recharts** com visões duplas (Grid de Cards para análise granular de jitter e Tabela Sumário para visão executiva de SLA e Uptime).
 
 ---
 
@@ -64,19 +64,19 @@ Este projeto foi projetado sob os pilares modernos de **Site Reliability Enginee
 ## ✨ Diferenciais Técnicos
 
 ### 1. Dual View: Grid + Table
-Dashboard com toggle entre **Grid de Cards** (com gráficos Recharts por nó) e **Tabela Sumário** com health bars de uptime por IP.
+Dashboard com alternância entre **Grid de Cards** (gráficos Recharts por nó) e **Tabela Sumário** com indicadores de uptime por IP.
 
 ### 2. ICMP Rootless no Docker
-Protocolo ICMP sem `--privileged` via `sysctls` (`net.ipv4.ping_group_range`) e imagens Debian slim com ping DGRAM.
+Protocolo ICMP configurado sem `--privileged` via `sysctls` (`net.ipv4.ping_group_range`) em imagens Debian slim.
 
-### 3. Coleta Assíncrona Não-Bloqueante & Segura
-Pool de subprocessos via `asyncio.create_subprocess_exec` sem uso de shell (prevenindo injeção de comando) com timeouts resilientes — 10 nós em paralelo, sem travar a API FastAPI.
+### 3. Coleta Assíncrona e Segura
+Pool de subprocessos com `asyncio.create_subprocess_exec` sem uso de shell (prevenindo injeção de comando) com timeouts definidos: 10 nós em paralelo, sem bloquear a API FastAPI.
 
 ### 4. Persistência Assíncrona Escalável
-Uso de `aiosqlite` com `PRAGMA journal_mode=WAL;` e índices para suportar acesso altamente concorrente (leituras e gravações assíncronas simultâneas). O sistema inclui uma rotina autônoma de `cleanup` para retenção dos últimos 7 dias.
+Uso de `aiosqlite` com `PRAGMA journal_mode=WAL;` e índices para suportar acesso concorrente (leituras e gravações simultâneas). O sistema inclui uma rotina autônoma de limpeza para retenção dos últimos 7 dias.
 
 ### 5. Detecção Automática de OS
-Regex unificado que parseia `time=` (Linux) e `tempo=` (Windows) — portabilidade total entre dev e prod.
+Regex unificado que processa a saída de tempo no Linux (`time=`) e no Windows (`tempo=`), oferecendo portabilidade entre os ambientes de desenvolvimento e produção.
 
 ---
 
