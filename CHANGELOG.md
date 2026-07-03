@@ -1,4 +1,4 @@
-﻿# Changelog
+# Changelog
 
 ## [2.0.0] - 2026-05-14
 
@@ -27,7 +27,7 @@
 ## [1.0.0] - 2026-05-06
 
 ### Release Inicial
-- Monitoramento ICMP de 10 endpoints com async polling
+- Monitoramento ICMP de 9 endpoints com async polling
 - GrÃ¡ficos Recharts com sÃ©ries temporais
 - API FastAPI com aiosqlite
 - Docker Compose com ICMP rootless

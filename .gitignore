@@ -37,7 +37,7 @@ yarn-error.log*
 
 # Banco de dados e logs
 data/
-*.db
+*.db*
 *.sqlite3
 
 # IDEs

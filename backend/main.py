@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import init_db, get_recent_metrics, get_summary
 from monitor import monitor_loop, TARGETS
+from ml_engine import analyze_network_anomalies
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -27,7 +28,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="NetOps Latency Analyzer API",
-    description="API de monitoramento de latencia e conectividade de rede",
+    description="API de monitoramento de latencia e conectividade de rede com IA Preditiva",
     version="1.0.0",
     lifespan=lifespan
 )
@@ -65,6 +66,33 @@ async def read_metrics():
 
 @app.get("/api/summary")
 async def read_summary():
-    """Retorna estatisticas resumidas por IP alvo."""
+    """Retorna estatisticas resumidas por IP alvo com insights de Inteligência Artificial."""
     stats = await get_summary()
-    return {"status": "ok", "data": stats}
+    data_metrics = await get_recent_metrics(300)
+    
+    grouped = {}
+    for row in data_metrics:
+        ip = row["target_ip"]
+        if ip not in grouped:
+            grouped[ip] = []
+        grouped[ip].append(dict(row))
+        
+    ai_analysis = analyze_network_anomalies(stats, grouped)
+    return {"status": "ok", "data": stats, "ai_insights": ai_analysis}
+
+@app.get("/api/ai-insights")
+async def read_ai_insights():
+    """Retorna análise detalhada de ML Preditiva e Z-Score de latência para cada endpoint."""
+    stats = await get_summary()
+    data_metrics = await get_recent_metrics(300)
+    
+    grouped = {}
+    for row in data_metrics:
+        ip = row["target_ip"]
+        if ip not in grouped:
+            grouped[ip] = []
+        grouped[ip].append(dict(row))
+        
+    ai_analysis = analyze_network_anomalies(stats, grouped)
+    return ai_analysis
+

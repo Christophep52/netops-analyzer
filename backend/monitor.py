@@ -12,7 +12,6 @@ TARGETS = [
     {"ip": "208.67.222.222",  "label": "OpenDNS (Cisco)"},
     {"ip": "8.26.56.26",      "label": "Comodo Secure DNS"},
     {"ip": "94.140.14.14",    "label": "AdGuard DNS"},
-    {"ip": "104.160.131.3",   "label": "Riot Games (NA)"},
     {"ip": "3.218.180.0",     "label": "AWS us-east-1"},
 ]
 
