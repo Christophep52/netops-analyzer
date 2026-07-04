@@ -142,7 +142,8 @@ function App() {
             <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', marginLeft: 4 }} className="pulse-green" />
           </div>
         </div>
-      </he      {/* STATS ROW */}
+      </header>
+      {/* STATS ROW */}
       <div className="fade-in" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 24 }}>
         {[
           { label: 'Latência Média', value: globalStats.avgLatency, unit: 'ms', icon: Gauge, color: '#3b82f6' },
@@ -182,7 +183,7 @@ function App() {
             const uptimePct = summary.total_pings > 0 ? ((summary.successful || 0) / summary.total_pings * 100).toFixed(1) : 0;
 
             return (
-              <div key={ip} className="glass-card" style={{ padding: '20px 24px', animationDelay: `${idx * 40}ms' }}>
+              <div key={ip} className="glass-card" style={{ padding: '20px 24px', animationDelay: `${idx * 40}ms` }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <div style={{
@@ -317,7 +318,6 @@ function App() {
             </table>
           </div>
         </div>
-      )}    </div>
       )}
 
       <footer className="fade-in" style={{ marginTop: 28, textAlign: 'center', color: '#1e2d55', fontSize: 11.5 }}>
