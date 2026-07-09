@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8000';
+const API_URL = '';
 
 const IP_INFO = {
   '8.8.8.8':        { label: 'Google DNS',           color: '#06b6d4', icon: 'dns' },
@@ -38,8 +38,8 @@ export const useAppStore = create((set, get) => ({
   fetchAll: async () => {
     try {
       const [metricsRes, summaryRes] = await Promise.all([
-        axios.get(`${API_URL}/api/metrics`, { timeout: 2000 }),
-        axios.get(`${API_URL}/api/summary`, { timeout: 2000 })
+        axios.get('/api/metrics', { timeout: 8000 }),
+        axios.get('/api/summary', { timeout: 8000 })
       ]);
       set({
         metricsData: metricsRes.data.data,
