@@ -6,7 +6,7 @@ services:
       dockerfile: Dockerfile
     container_name: netops-analyzer-backend
     ports:
-      - "8000:8000"
+      - "8003:8000"
     volumes:
       - ./data:/app/data
     restart: unless-stopped
@@ -20,9 +20,9 @@ services:
       dockerfile: Dockerfile
     container_name: netops-analyzer-frontend
     ports:
-      - "3000:3000"
+      - "3003:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_API_URL=http://localhost:8003
     restart: unless-stopped
     depends_on:
       - backend

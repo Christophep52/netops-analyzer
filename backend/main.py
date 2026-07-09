@@ -95,4 +95,3 @@ async def read_ai_insights():
         
     ai_analysis = analyze_network_anomalies(stats, grouped)
     return ai_analysis
-

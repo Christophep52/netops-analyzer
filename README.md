@@ -60,8 +60,8 @@ docker compose up --build -d
 ```
 
 Access the applications:
-- **Enterprise Observability UI**: `http://localhost:3000`
-- **FastAPI Telemetry Gateway Docs**: `http://localhost:8000/docs`
+- **Enterprise Observability UI**: `http://localhost:3003`
+- **FastAPI Telemetry Gateway Docs**: `http://localhost:8003/docs`
 
 ---
 
