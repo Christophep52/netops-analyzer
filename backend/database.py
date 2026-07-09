@@ -1,17 +1,15 @@
-import aiosqlite
+import asyncpg
 import os
 
-DB_PATH = os.getenv("DB_PATH", "./data/metrics.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/metrics_db")
 
 async def init_db():
-    """Inicializa o banco de dados SQLite e cria a tabela de metricas."""
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-    async with aiosqlite.connect(DB_PATH) as db:
-        await db.execute("PRAGMA journal_mode=WAL;")
-        await db.execute("""
+    """Inicializa o banco de dados PostgreSQL e cria a tabela de metricas."""
+    async with asyncpg.connect(DATABASE_URL) as conn:
+        await conn.execute("""
             CREATE TABLE IF NOT EXISTS metrics (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                id SERIAL PRIMARY KEY,
+                timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
                 target_ip TEXT NOT NULL,
                 latency_ms REAL NOT NULL,
                 status TEXT NOT NULL

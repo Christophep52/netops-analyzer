@@ -33,6 +33,7 @@ function App() {
   const [summaryData, setSummaryData] = useState([]);
   const [aiInsights, setAiInsights] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState('grid');
   const [lastUpdate, setLastUpdate] = useState(null);
   const [alerts, setAlerts] = useState([
     { time: '14:02:11', type: 'critical', title: 'CRITICAL: UNAUTHORIZED ACCESS ATTEMPT', detail: 'Target: Subnet 10.0.4.2 | Action: Blocked' },
@@ -180,7 +181,7 @@ function App() {
     return (
       <div className="loading-screen">
         <div className="loading-spinner" />
-        <p className="loading-text">CONNECTING TO NETOPS COMMAND...</p>
+        <p className="loading-text">CONNECTING TO NETOPS ANALYZER...</p>
       </div>
     );
   }
@@ -191,7 +192,7 @@ function App() {
         <div className="header-left">
           <div className="logo">
             <span className="material-symbols-outlined logo-icon">radar</span>
-            NET-OPS
+            NetOps Analyzer
           </div>
           <div className="nav-tabs">
             {NAV_ITEMS.map((item, i) => (
@@ -255,62 +256,139 @@ function App() {
 
           <div className="middle-row fade-up delay-2">
             <div className="node-section">
-              <div className="section-title">
-                <span className="material-symbols-outlined">dns</span>
-                NETWORK NODES
+              <div className="section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <span className="material-symbols-outlined">dns</span>
+                  NETWORK NODES
+                </div>
+                <div className="view-toggle" style={{ display: 'flex', gap: '8px' }}>
+                  <button onClick={() => setViewMode('grid')} className={`btn-view ${viewMode === 'grid' ? 'active' : ''}`} style={{ padding: '4px 12px', background: viewMode === 'grid' ? 'rgba(6,182,212,0.2)' : 'transparent', border: '1px solid #06b6d4', color: '#06b6d4', borderRadius: '4px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: '12px', transition: 'all 0.2s' }}>
+                    GRID VIEW
+                  </button>
+                  <button onClick={() => setViewMode('table')} className={`btn-view ${viewMode === 'table' ? 'active' : ''}`} style={{ padding: '4px 12px', background: viewMode === 'table' ? 'rgba(6,182,212,0.2)' : 'transparent', border: '1px solid #06b6d4', color: '#06b6d4', borderRadius: '4px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: '12px', transition: 'all 0.2s' }}>
+                    TABLE VIEW
+                  </button>
+                </div>
               </div>
-              <div className="node-grid">
-                {summaryData.map(s => {
-                  const ip = s.target_ip || s.target;
-                  const info = IP_INFO[ip] || { label: ip, color: '#06b6d4', icon: 'router' };
-                  const nodeData = metricsData[ip] || [];
-                  const latest = nodeData[nodeData.length - 1] || {};
-                  const isSuccess = latest.status === 'sucesso' || latest.status === 'success';
-                  const latency = latest.latency_ms || 0;
-                  const isHealthy = isSuccess && latency < 100;
-                  const statusClass = !isSuccess ? 'down' : isHealthy ? 'healthy' : 'warning';
-                  const valClass = !isSuccess ? 'color-danger' : isHealthy ? 'color-healthy' : 'color-warning';
-                  
-                  return (
-                    <div key={ip} className="node-card">
-                      <div className="cyan-glow" />
-                      <div className="node-header">
-                        <div className="node-identity">
-                          <span className="node-name">{info.label}</span>
-                          <span className="node-ip">{ip}</span>
-                        </div>
-                        <div className="node-status">
-                          <div className={`status-dot ${statusClass}`} />
-                        </div>
-                      </div>
-                      <div className="node-metrics">
-                        <div className={`latency-value ${valClass}`}>
-                          {latency}<small>ms</small>
-                        </div>
-                        <div className="node-sub-metrics">
-                          <div className="sub-metric">
-                            <span className="sub-metric-label">Loss</span>
-                            <span className="sub-metric-value">
-                              {s.total_pings > 0 ? ((s.total_pings - (s.successful || 0)) / s.total_pings * 100).toFixed(1) : 0}%
-                            </span>
+              
+              {viewMode === 'grid' ? (
+                <div className="node-grid">
+                  {summaryData.map(s => {
+                    const ip = s.target_ip || s.target;
+                    const info = IP_INFO[ip] || { label: ip, color: '#06b6d4', icon: 'router' };
+                    const nodeData = metricsData[ip] || [];
+                    const latest = nodeData[nodeData.length - 1] || {};
+                    const isSuccess = latest.status === 'sucesso' || latest.status === 'success';
+                    const latency = latest.latency_ms || 0;
+                    const isHealthy = isSuccess && latency < 100;
+                    const statusClass = !isSuccess ? 'down' : isHealthy ? 'healthy' : 'warning';
+                    const valClass = !isSuccess ? 'color-danger' : isHealthy ? 'color-healthy' : 'color-warning';
+                    
+                    return (
+                      <div key={ip} className="node-card">
+                        <div className="cyan-glow" />
+                        <div className="node-header">
+                          <div className="node-identity">
+                            <span className="node-name">{info.label}</span>
+                            <span className="node-ip">{ip}</span>
                           </div>
-                          <div className="sub-metric">
-                            <span className="sub-metric-label">Jitter</span>
-                            <span className="sub-metric-value">{s.jitter || 0}</span>
+                          <div className="node-status">
+                            <div className={`status-dot ${statusClass}`} />
                           </div>
                         </div>
+                        <div className="node-metrics">
+                          <div className={`latency-value ${valClass}`}>
+                            {latency}<small>ms</small>
+                          </div>
+                          <div className="node-sub-metrics">
+                            <div className="sub-metric">
+                              <span className="sub-metric-label">Loss</span>
+                              <span className="sub-metric-value">
+                                {s.total_pings > 0 ? ((s.total_pings - (s.successful || 0)) / s.total_pings * 100).toFixed(1) : 0}%
+                              </span>
+                            </div>
+                            <div className="sub-metric">
+                              <span className="sub-metric-label">Jitter</span>
+                              <span className="sub-metric-value">{s.jitter || 0}</span>
+                            </div>
+                          </div>
+                          
+                          {/* Confidence Zone AI Injection */}
+                          {(() => {
+                            const insight = aiInsights.find(i => i.target_ip === ip);
+                            if (!insight) return null;
+                            const confColor = insight.confidence_zone > 80 ? 'color-healthy' : insight.confidence_zone > 50 ? 'color-warning' : 'color-danger';
+                            return (
+                              <div style={{ marginTop: '12px', padding: '8px', background: 'rgba(255,255,255,0.03)', borderRadius: '6px', fontSize: '11px', fontFamily: 'var(--font-mono)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                  <span style={{ color: 'var(--color-text-muted)' }}>AI Confidence:</span>
+                                  <span className={confColor}>{insight.confidence_zone}%</span>
+                                </div>
+                                <div style={{ color: 'var(--color-text-muted)', fontSize: '10px' }}>
+                                  Model: Isolation Forest
+                                </div>
+                              </div>
+                            );
+                          })()}
+                          
+                        </div>
+                        <div className="node-sparkline">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={nodeData}>
+                              <Area type="monotone" dataKey="latency_ms" stroke={info.color} fill="none" strokeWidth={2} isAnimationActive={false} />
+                            </AreaChart>
+                          </ResponsiveContainer>
+                        </div>
                       </div>
-                      <div className="node-sparkline">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <AreaChart data={nodeData}>
-                            <Area type="monotone" dataKey="latency_ms" stroke={info.color} fill="none" strokeWidth={2} isAnimationActive={false} />
-                          </AreaChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="node-table-container" style={{ background: 'rgba(15, 23, 42, 0.4)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
+                    <thead style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                      <tr>
+                        <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600 }}>Target</th>
+                        <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600 }}>Status</th>
+                        <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600 }}>Avg Latency</th>
+                        <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600 }}>Packet Loss</th>
+                        <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600 }}>Uptime</th>
+                        <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600 }}>Jitter</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {summaryData.map(s => {
+                        const ip = s.target_ip || s.target;
+                        const info = IP_INFO[ip] || { label: ip, color: '#06b6d4', icon: 'router' };
+                        const isSuccess = s.last_status === 'success' || s.last_status === 'sucesso';
+                        const uptime = s.total_pings > 0 ? (s.successful / s.total_pings * 100).toFixed(1) : 0;
+                        const loss = s.total_pings > 0 ? ((s.total_pings - s.successful) / s.total_pings * 100).toFixed(1) : 0;
+                        
+                        return (
+                          <tr key={ip} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                            <td style={{ padding: '12px 16px' }}>
+                              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <span style={{ fontWeight: 600, color: '#e2e8f0' }}>{info.label}</span>
+                                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: '#94a3b8' }}>{ip}</span>
+                              </div>
+                            </td>
+                            <td style={{ padding: '12px 16px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <div className={`status-dot ${isSuccess ? 'healthy' : 'down'}`} style={{ position: 'relative', top: 0, left: 0 }} />
+                                <span style={{ color: isSuccess ? '#10b981' : '#ef4444' }}>{isSuccess ? 'ONLINE' : 'OFFLINE'}</span>
+                              </div>
+                            </td>
+                            <td style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)' }}>{s.avg_latency || 0} ms</td>
+                            <td style={{ padding: '12px 16px', color: loss > 0 ? '#ef4444' : '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{loss}%</td>
+                            <td style={{ padding: '12px 16px', color: uptime < 99 ? '#f59e0b' : '#10b981', fontFamily: 'var(--font-mono)' }}>{uptime}%</td>
+                            <td style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)' }}>{s.jitter || 0}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
 
             <div className="alert-section">
