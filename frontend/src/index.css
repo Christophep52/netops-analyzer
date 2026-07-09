@@ -1,30 +1,80 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Hanken+Grotesk:wght@400;600;800&display=swap');
 @import "tailwindcss";
 
 /* ===========================================
-   NetOps Latency Analyzer — "Beautifully Human" Monitoring Tool
-   Premium, data-dense, crisp typography, inspired by high-end dev tools
+   NET-OPS COMMAND — Cyberpunk Terminal UI
+   Stitch Design Integration (Tailwind v4)
    =========================================== */
 
 @theme {
-  --color-bg: #0b0f19;
-  /* Deep cool dark */
-  --color-panel: #111827;
-  --color-panel-elevated: #1f2937;
+  /* --- Surface / Background --- */
+  --color-background: #051424;
+  --color-surface: #051424;
+  --color-surface-dim: #051424;
+  --color-surface-bright: #2c3a4c;
+  --color-surface-container-lowest: #010f1f;
+  --color-surface-container-low: #0d1c2d;
+  --color-surface-container: #122131;
+  --color-surface-container-high: #1c2b3c;
+  --color-surface-container-highest: #273647;
+  --color-surface-variant: #273647;
+  --color-surface-tint: #00dbe7;
 
-  --color-border: #162040;
-  --color-border-hover: #1e2d55;
+  /* --- Primary (Cyan) --- */
+  --color-primary: #e1fdff;
+  --color-primary-container: #00f2ff;
+  --color-primary-fixed: #74f5ff;
+  --color-primary-fixed-dim: #00dbe7;
+  --color-on-primary: #00363a;
+  --color-on-primary-container: #006a71;
+  --color-on-primary-fixed: #002022;
+  --color-on-primary-fixed-variant: #004f54;
+  --color-inverse-primary: #00696f;
 
-  --color-text-main: #f8fafc;
-  --color-text-muted: #94a3b8;
-  --color-text-subtle: #64748b;
+  /* --- Secondary (Green) --- */
+  --color-secondary: #ecffe3;
+  --color-secondary-container: #13ff43;
+  --color-secondary-fixed: #72ff70;
+  --color-secondary-fixed-dim: #00e639;
+  --color-on-secondary: #003907;
+  --color-on-secondary-container: #007117;
+  --color-on-secondary-fixed: #002203;
+  --color-on-secondary-fixed-variant: #00530e;
 
-  --color-accent: #3b82f6;
-  --color-accent-soft: rgba(59, 130, 246, 0.15);
+  /* --- Tertiary (Red/Warm) --- */
+  --color-tertiary: #fff5f4;
+  --color-tertiary-container: #ffd0cb;
+  --color-tertiary-fixed: #ffdad6;
+  --color-tertiary-fixed-dim: #ffb4ab;
+  --color-on-tertiary: #690006;
+  --color-on-tertiary-container: #c20014;
+  --color-on-tertiary-fixed: #410002;
+  --color-on-tertiary-fixed-variant: #93000c;
 
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --color-danger: #ef4444;
+  /* --- Error --- */
+  --color-error: #ffb4ab;
+  --color-error-container: #93000a;
+  --color-on-error: #690005;
+  --color-on-error-container: #ffdad6;
+
+  /* --- Neutral / Surface text --- */
+  --color-on-surface: #d4e4fa;
+  --color-on-surface-variant: #b9cacb;
+  --color-on-background: #d4e4fa;
+  --color-inverse-surface: #d4e4fa;
+  --color-inverse-on-surface: #233143;
+
+  /* --- Outline --- */
+  --color-outline: #849495;
+  --color-outline-variant: #3a494b;
+
+  /* --- Font families --- */
+  --font-data-mono: 'JetBrains Mono', monospace;
+  --font-label-caps: 'JetBrains Mono', monospace;
+  --font-code-sm: 'JetBrains Mono', monospace;
+  --font-body-md: 'Hanken Grotesk', sans-serif;
+  --font-headline-md: 'Hanken Grotesk', sans-serif;
+  --font-display-lg: 'Hanken Grotesk', sans-serif;
 }
 
 * {
@@ -34,188 +84,179 @@
 }
 
 body {
-  font-family: 'Inter', -apple-system, sans-serif;
-  background-color: var(--color-bg);
-  color: var(--color-text-main);
+  font-family: 'Hanken Grotesk', -apple-system, sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-on-surface);
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
-}
-
-.font-mono {
-  font-family: 'Roboto Mono', monospace;
-}
-
-/* --- Scrollbar --- */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--color-border);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-border-hover);
-}
-
-/* ===========================================
-   LAYOUT & CARDS
-   =========================================== */
-
-.bg-grid {
-  /* Subtle dot pattern for a technical feel */
-  background-image: radial-gradient(var(--color-border) 1px, transparent 1px);
-  background-size: 24px 24px;
-}
-
-.glass-card {
-  background: rgba(17, 24, 39, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  box-shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.5);
-}
-
-.stat-card {
-  background: var(--color-panel);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  position: relative;
   overflow: hidden;
-  transition: all 0.2s ease;
 }
 
-.stat-card:hover {
-  border-color: var(--color-border-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
-/* Subtle top accent line for stat cards */
-.stat-card::before {
-  content: '';
+/* --- Scanline CRT Effect --- */
+.scanlines::before {
+  content: " ";
+  display: block;
   position: absolute;
   top: 0;
   left: 0;
+  bottom: 0;
   right: 0;
-  height: 2px;
-  background: var(--color-border);
-  transition: background 0.2s ease;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+              linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
+  z-index: 2;
+  background-size: 100% 4px, 3px 100%;
+  pointer-events: none;
 }
 
-.stat-card:hover::before {
-  background: var(--color-accent);
+/* --- Glass Panel --- */
+.glass-panel {
+  background: rgba(1, 15, 31, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(132, 148, 149, 0.2);
 }
 
-/* ===========================================
-   TYPOGRAPHY & UTILS
-   =========================================== */
-
-.text-gradient {
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
+/* --- Breathing Glow for status dots --- */
+.breathing-glow {
+  animation: breathe 2s infinite ease-in-out;
 }
 
-/* Status dots - refined pulse */
+@keyframes breathe {
+  0%, 100% { box-shadow: 0 0 4px currentColor; opacity: 0.8; }
+  50% { box-shadow: 0 0 12px currentColor; opacity: 1; }
+}
+
+/* --- Hide scrollbar for terminal look --- */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* --- Slide animation for footer progress bar --- */
+@keyframes slide {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(300%); }
+}
+
+/* --- Pulse animations --- */
 .pulse-green {
-  background: var(--color-success) !important;
-  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4) !important;
-  animation: pulse-g 2s infinite cubic-bezier(0.66, 0, 0, 1) !important;
+  animation: pulse-g 2s infinite cubic-bezier(0.66, 0, 0, 1);
 }
-
 @keyframes pulse-g {
-  to {
-    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
-  }
+  to { box-shadow: 0 0 0 6px rgba(0, 230, 57, 0); }
 }
 
-.pulse-amber {
-  background: var(--color-warning) !important;
-  box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4) !important;
-  animation: pulse-a 2s infinite cubic-bezier(0.66, 0, 0, 1) !important;
+.pulse-cyan {
+  animation: pulse-c 2s infinite cubic-bezier(0.66, 0, 0, 1);
+}
+@keyframes pulse-c {
+  to { box-shadow: 0 0 0 6px rgba(0, 219, 231, 0); }
 }
 
-@keyframes pulse-a {
-  to {
-    box-shadow: 0 0 0 6px rgba(245, 158, 11, 0);
-  }
-}
-
-.pulse-red {
-  background: var(--color-danger) !important;
-  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4) !important;
-  animation: pulse-r 2s infinite cubic-bezier(0.66, 0, 0, 1) !important;
-}
-
-@keyframes pulse-r {
-  to {
-    box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
-  }
-}
-
-/* Remove glow classes text-shadow overrides from App.jsx by forcing none here */
-.glow-blue {
-  color: var(--color-accent);
-  text-shadow: none !important;
-}
-
-.glow-green {
-  color: var(--color-success);
-  text-shadow: none !important;
-}
-
-.glow-amber {
-  color: var(--color-warning);
-  text-shadow: none !important;
-}
-
-.glow-red {
-  color: var(--color-danger);
-  text-shadow: none !important;
-}
-
-/* ===========================================
-   RECHARTS OVERRIDES (Premium Tooltip & Grid)
-   =========================================== */
-
+/* --- Recharts overrides (keep existing integration) --- */
 .recharts-cartesian-grid-horizontal line,
 .recharts-cartesian-grid-vertical line {
-  stroke: var(--color-border) !important;
+  stroke: var(--color-outline-variant) !important;
   stroke-dasharray: 4 4 !important;
 }
 
-.recharts-tooltip-wrapper {
-  outline: none;
-}
+.recharts-tooltip-wrapper { outline: none; }
 
 .recharts-default-tooltip {
-  background-color: var(--color-panel-elevated) !important;
-  border: 1px solid var(--color-border) !important;
-  border-radius: 8px !important;
+  background-color: var(--color-surface-container-high) !important;
+  border: 1px solid var(--color-outline-variant) !important;
+  border-radius: 4px !important;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
   padding: 12px 16px !important;
 }
 
-.recharts-tooltip-label {
-  color: var(--color-text-muted) !important;
-  font-family: 'Roboto Mono', monospace !important;
-  font-size: 0.75rem !important;
-  margin-bottom: 8px !important;
+/* --- Scrollbar styled --- */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-outline-variant); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-outline); }
+
+/* --- Table styles for table view --- */
+.summary-table {
+  border-collapse: collapse;
+}
+.summary-table thead th {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  font-weight: 700;
   text-transform: uppercase;
+  color: var(--color-on-surface-variant);
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--color-outline-variant);
+  background: var(--color-surface-container-low);
+}
+.summary-table tbody td {
+  font-size: 13px;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(58, 73, 75, 0.3);
+  color: var(--color-on-surface);
+}
+.summary-table tbody tr:hover {
+  background: rgba(0, 219, 231, 0.04);
 }
 
-.recharts-tooltip-item {
-  color: var(--color-text-main) !important;
-  font-family: 'Inter', sans-serif !important;
-  font-weight: 500 !important;
-  font-size: 0.875rem !important;
-  padding: 2px 0 !important;
+/* --- Health bar for uptime --- */
+.health-bar {
+  height: 4px;
+  background: var(--color-surface-container-highest);
+  overflow: hidden;
+}
+.health-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+/* --- Stat card --- */
+.stat-card {
+  background: var(--color-surface-container);
+  border: 1px solid var(--color-outline-variant);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+.stat-card:hover {
+  border-color: var(--color-primary-fixed-dim);
+  box-shadow: 0 0 16px rgba(0, 219, 231, 0.1);
+}
+
+/* --- Glass card (for chart cards) --- */
+.glass-card {
+  background: rgba(1, 15, 31, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--color-outline-variant);
+  transition: border-color 0.2s ease;
+}
+.glass-card:hover {
+  border-color: var(--color-primary-fixed-dim);
+}
+
+/* --- Loading spinner --- */
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 2px solid var(--color-outline-variant);
+  border-top-color: var(--color-primary-fixed-dim);
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* --- Fade in --- */
+.fade-in {
+  animation: fadeIn 0.4s ease-out both;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
