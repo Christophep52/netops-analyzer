@@ -4,13 +4,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer
+  Tooltip, ResponsiveContainer, BarChart, Bar, Legend
 } from 'recharts';
 import { format } from 'date-fns';
 import { 
   Radar, LayoutDashboard, Share2, Server, Terminal, 
   Activity, ActivityIcon, AlertTriangle, Info, Network,
-  Shield, CheckCircle, Zap
+  Shield, CheckCircle, Zap, Download, RefreshCw, Search
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -27,11 +27,11 @@ const IP_INFO = {
 };
 
 const NAV_ITEMS = [
-  { icon: <LayoutDashboard size={20} />, label: 'Dashboard', active: true },
-  { icon: <Share2 size={20} />, label: 'Topology' },
-  { icon: <Server size={20} />, label: 'Inventory' },
-  { icon: <Terminal size={20} />, label: 'Alert Logs' },
-  { icon: <Activity size={20} />, label: 'Traffic' },
+  { id: 'dashboard', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
+  { id: 'topology', icon: <Share2 size={20} />, label: 'Topology' },
+  { id: 'inventory', icon: <Server size={20} />, label: 'Inventory' },
+  { id: 'alerts', icon: <Terminal size={20} />, label: 'Alert Logs' },
+  { id: 'traffic', icon: <Activity size={20} />, label: 'Traffic' },
 ];
 
 export default function NetOpsDashboard() {
@@ -41,6 +41,8 @@ export default function NetOpsDashboard() {
   } = useAppStore();
 
   const [isMounted, setIsMounted] = useState(false);
+  const [activeNav, setActiveNav] = useState('dashboard');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     setIsMounted(true);
@@ -89,6 +91,25 @@ export default function NetOpsDashboard() {
     catch { return tick; }
   };
 
+  const exportCSV = () => {
+    const csvContent = "data:text/csv;charset=utf-8," +
+      "Target IP,Label,Avg Latency (ms),Packet Loss (%),Uptime (%),Jitter\n" +
+      summaryData.map(s => {
+        const ip = s.target_ip || s.target;
+        const info = IP_INFO[ip] || { label: ip };
+        const loss = s.total_pings > 0 ? ((s.total_pings - s.successful) / s.total_pings * 100).toFixed(1) : 0;
+        const uptime = s.total_pings > 0 ? (s.successful / s.total_pings * 100).toFixed(1) : 0;
+        return `"${ip}","${info.label}",${s.avg_latency || 0},${loss},${uptime},${s.jitter || 0}`;
+      }).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "netops_telemetry.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       const d = payload[0].payload;
@@ -111,6 +132,12 @@ export default function NetOpsDashboard() {
     );
   }
 
+  const filteredNodes = summaryData.filter(s => {
+    const ip = s.target_ip || s.target;
+    const info = IP_INFO[ip] || { label: ip };
+    return !searchQuery || ip.toLowerCase().includes(searchQuery.toLowerCase()) || info.label.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
   return (
     <div className="app-container">
       <header className="header">
@@ -120,14 +147,28 @@ export default function NetOpsDashboard() {
             NetOps Analyzer
           </div>
           <div className="nav-tabs">
-            {NAV_ITEMS.map((item, i) => (
-              <button key={i} className={`nav-tab ${item.active ? 'active' : ''}`}>
+            {NAV_ITEMS.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setActiveNav(item.id)}
+                className={`nav-tab ${activeNav === item.id ? 'active' : ''}`}
+              >
                 {item.label}
               </button>
             ))}
           </div>
         </div>
-        <div className="header-right">
+        <div className="header-right" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <button 
+            onClick={exportCSV}
+            style={{
+              padding: '6px 12px', background: 'rgba(6,182,212,0.15)', border: '1px solid #06b6d4',
+              color: '#06b6d4', borderRadius: '6px', cursor: 'pointer', fontFamily: 'var(--font-mono)',
+              fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px'
+            }}
+          >
+            <Download size={14} /> EXPORT CSV
+          </button>
           <div className="online-badge">
             <div className="online-dot" />
             ONLINE
@@ -140,8 +181,13 @@ export default function NetOpsDashboard() {
 
       <div className="main-layout">
         <aside className="sidebar">
-          {NAV_ITEMS.map((item, i) => (
-            <button key={i} className={`sidebar-item ${item.active ? 'active' : ''}`} title={item.label}>
+          {NAV_ITEMS.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveNav(item.id)}
+              className={`sidebar-item ${activeNav === item.id ? 'active' : ''}`}
+              title={item.label}
+            >
               {item.icon}
             </button>
           ))}
@@ -179,197 +225,332 @@ export default function NetOpsDashboard() {
             </div>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="middle-row">
-            <div className="node-section">
-              <div className="section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Server size={20} />
-                  NETWORK NODES
-                </div>
-                <div className="view-toggle" style={{ display: 'flex', gap: '8px' }}>
-                  <button onClick={() => setViewMode('grid')} className={`btn-view ${viewMode === 'grid' ? 'active' : ''}`} style={{ padding: '4px 12px', background: viewMode === 'grid' ? 'rgba(6,182,212,0.2)' : 'transparent', border: '1px solid #06b6d4', color: '#06b6d4', borderRadius: '4px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: '12px', transition: 'all 0.2s' }}>
-                    GRID VIEW
-                  </button>
-                  <button onClick={() => setViewMode('table')} className={`btn-view ${viewMode === 'table' ? 'active' : ''}`} style={{ padding: '4px 12px', background: viewMode === 'table' ? 'rgba(6,182,212,0.2)' : 'transparent', border: '1px solid #06b6d4', color: '#06b6d4', borderRadius: '4px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: '12px', transition: 'all 0.2s' }}>
-                    TABLE VIEW
-                  </button>
-                </div>
-              </div>
-              
-              {viewMode === 'grid' ? (
-                <div className="node-grid">
-                  <AnimatePresence>
-                    {summaryData.map(s => {
-                      const ip = s.target_ip || s.target;
-                      const info = IP_INFO[ip] || { label: ip, color: '#06b6d4', icon: <Server size={16}/> };
-                      const nodeData = metricsData[ip] || [];
-                      const latest = nodeData[nodeData.length - 1] || {};
-                      const isSuccess = latest.status === 'sucesso' || latest.status === 'success';
-                      const latency = latest.latency_ms || 0;
-                      const isHealthy = isSuccess && latency < 100;
-                      const statusClass = !isSuccess ? 'down' : isHealthy ? 'healthy' : 'warning';
-                      const valClass = !isSuccess ? 'color-danger' : isHealthy ? 'color-healthy' : 'color-warning';
-                      
-                      return (
-                        <motion.div key={ip} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="node-card">
-                          <div className="cyan-glow" />
-                          <div className="node-header">
-                            <div className="node-identity">
-                              <span className="node-name">{info.label}</span>
-                              <span className="node-ip">{ip}</span>
-                            </div>
-                            <div className="node-status">
-                              <div className={`status-dot ${statusClass}`} />
-                            </div>
-                          </div>
-                          <div className="node-metrics">
-                            <div className={`latency-value ${valClass}`}>
-                              {latency}<small>ms</small>
-                            </div>
-                            <div className="node-sub-metrics">
-                              <div className="sub-metric">
-                                <span className="sub-metric-label">Loss</span>
-                                <span className="sub-metric-value">
-                                  {s.total_pings > 0 ? ((s.total_pings - (s.successful || 0)) / s.total_pings * 100).toFixed(1) : 0}%
-                                </span>
-                              </div>
-                              <div className="sub-metric">
-                                <span className="sub-metric-label">Jitter</span>
-                                <span className="sub-metric-value">{s.jitter || 0}</span>
-                              </div>
-                            </div>
-                          </div>
+          {activeNav === 'dashboard' && (
+            <>
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="middle-row">
+                <div className="node-section">
+                  <div className="section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Server size={20} />
+                      NETWORK NODES
+                    </div>
+                    <div className="view-toggle" style={{ display: 'flex', gap: '8px' }}>
+                      <button onClick={() => setViewMode('grid')} className={`btn-view ${viewMode === 'grid' ? 'active' : ''}`} style={{ padding: '4px 12px', background: viewMode === 'grid' ? 'rgba(6,182,212,0.2)' : 'transparent', border: '1px solid #06b6d4', color: '#06b6d4', borderRadius: '4px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: '12px', transition: 'all 0.2s' }}>
+                        GRID VIEW
+                      </button>
+                      <button onClick={() => setViewMode('table')} className={`btn-view ${viewMode === 'table' ? 'active' : ''}`} style={{ padding: '4px 12px', background: viewMode === 'table' ? 'rgba(6,182,212,0.2)' : 'transparent', border: '1px solid #06b6d4', color: '#06b6d4', borderRadius: '4px', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: '12px', transition: 'all 0.2s' }}>
+                        TABLE VIEW
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {viewMode === 'grid' ? (
+                    <div className="node-grid">
+                      <AnimatePresence>
+                        {summaryData.map(s => {
+                          const ip = s.target_ip || s.target;
+                          const info = IP_INFO[ip] || { label: ip, color: '#06b6d4', icon: <Server size={16}/> };
+                          const nodeData = metricsData[ip] || [];
+                          const latest = nodeData[nodeData.length - 1] || {};
+                          const isSuccess = latest.status === 'sucesso' || latest.status === 'success';
+                          const latency = latest.latency_ms || 0;
+                          const isHealthy = isSuccess && latency < 100;
+                          const statusClass = !isSuccess ? 'down' : isHealthy ? 'healthy' : 'warning';
+                          const valClass = !isSuccess ? 'color-danger' : isHealthy ? 'color-healthy' : 'color-warning';
                           
-                          {/* Confidence Zone AI Injection */}
-                          {(() => {
-                            const insight = aiInsights.find(i => i.target_ip === ip);
-                            if (!insight) return null;
-                            const confColor = insight.confidence_zone > 80 ? 'color-healthy' : insight.confidence_zone > 50 ? 'color-warning' : 'color-danger';
-                            return (
-                              <div style={{ marginTop: '8px', zIndex: 1, padding: '8px', background: 'rgba(255,255,255,0.03)', borderRadius: '6px', fontSize: '11px', fontFamily: 'var(--font-mono)' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                                  <span style={{ color: 'var(--color-text-muted)' }}>AI Confidence:</span>
-                                  <span className={confColor}>{insight.confidence_zone}%</span>
+                          return (
+                            <motion.div key={ip} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="node-card">
+                              <div className="cyan-glow" />
+                              <div className="node-header">
+                                <div className="node-identity">
+                                  <span className="node-name">{info.label}</span>
+                                  <span className="node-ip">{ip}</span>
                                 </div>
-                                <div style={{ color: 'var(--color-text-muted)', fontSize: '10px', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden' }}>
-                                  {insight.message}
+                                <div className="node-status">
+                                  <div className={`status-dot ${statusClass}`} />
                                 </div>
                               </div>
-                            );
-                          })()}
+                              <div className="node-metrics">
+                                <div className={`latency-value ${valClass}`}>
+                                  {latency}<small>ms</small>
+                                </div>
+                                <div className="node-sub-metrics">
+                                  <div className="sub-metric">
+                                    <span className="sub-metric-label">Loss</span>
+                                    <span className="sub-metric-value">
+                                      {s.total_pings > 0 ? ((s.total_pings - (s.successful || 0)) / s.total_pings * 100).toFixed(1) : 0}%
+                                    </span>
+                                  </div>
+                                  <div className="sub-metric">
+                                    <span className="sub-metric-label">Jitter</span>
+                                    <span className="sub-metric-value">{s.jitter || 0}</span>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              {(() => {
+                                const insight = aiInsights.find(i => i.target_ip === ip);
+                                if (!insight) return null;
+                                const confColor = insight.confidence_zone > 80 ? 'color-healthy' : insight.confidence_zone > 50 ? 'color-warning' : 'color-danger';
+                                return (
+                                  <div style={{ marginTop: '8px', zIndex: 1, padding: '8px', background: 'rgba(255,255,255,0.03)', borderRadius: '6px', fontSize: '11px', fontFamily: 'var(--font-mono)' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                      <span style={{ color: 'var(--color-text-muted)' }}>AI Confidence:</span>
+                                      <span className={confColor}>{insight.confidence_zone}%</span>
+                                    </div>
+                                    <div style={{ color: 'var(--color-text-muted)', fontSize: '10px', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden' }}>
+                                      {insight.message}
+                                    </div>
+                                  </div>
+                                );
+                              })()}
 
-                          <div className="node-sparkline">
-                            <ResponsiveContainer width="100%" height="100%">
-                              <AreaChart data={nodeData}>
-                                <Area type="monotone" dataKey="latency_ms" stroke={info.color} fill="none" strokeWidth={2} isAnimationActive={false} />
-                              </AreaChart>
-                            </ResponsiveContainer>
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                  </AnimatePresence>
-                </div>
-              ) : (
-                <div className="node-table-container" style={{ background: 'rgba(15, 23, 42, 0.4)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
-                    <thead style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                      <tr>
-                        <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600 }}>Target</th>
-                        <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600 }}>Status</th>
-                        <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600 }}>Avg Latency</th>
-                        <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600 }}>Packet Loss</th>
-                        <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600 }}>Uptime</th>
-                        <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600 }}>Jitter</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {summaryData.map(s => {
-                        const ip = s.target_ip || s.target;
-                        const info = IP_INFO[ip] || { label: ip, color: '#06b6d4', icon: <Server size={16}/> };
-                        const isSuccess = s.last_status === 'success' || s.last_status === 'sucesso';
-                        const uptime = s.total_pings > 0 ? (s.successful / s.total_pings * 100).toFixed(1) : 0;
-                        const loss = s.total_pings > 0 ? ((s.total_pings - s.successful) / s.total_pings * 100).toFixed(1) : 0;
-                        
-                        return (
-                          <tr key={ip} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                            <td style={{ padding: '12px 16px' }}>
-                              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <span style={{ fontWeight: 600, color: '#e2e8f0' }}>{info.label}</span>
-                                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: '#94a3b8' }}>{ip}</span>
+                              <div className="node-sparkline">
+                                <ResponsiveContainer width="100%" height="100%">
+                                  <AreaChart data={nodeData}>
+                                    <Area type="monotone" dataKey="latency_ms" stroke={info.color} fill="none" strokeWidth={2} isAnimationActive={false} />
+                                  </AreaChart>
+                                </ResponsiveContainer>
                               </div>
-                            </td>
-                            <td style={{ padding: '12px 16px' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <div className={`status-dot ${isSuccess ? 'healthy' : 'down'}`} style={{ position: 'relative', top: 0, left: 0 }} />
-                                <span style={{ color: isSuccess ? '#10b981' : '#ef4444' }}>{isSuccess ? 'ONLINE' : 'OFFLINE'}</span>
-                              </div>
-                            </td>
-                            <td style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)' }}>{s.avg_latency || 0} ms</td>
-                            <td style={{ padding: '12px 16px', color: loss > 0 ? '#ef4444' : '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{loss}%</td>
-                            <td style={{ padding: '12px 16px', color: uptime < 99 ? '#f59e0b' : '#10b981', fontFamily: 'var(--font-mono)' }}>{uptime}%</td>
-                            <td style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)' }}>{s.jitter || 0}</td>
+                            </motion.div>
+                          );
+                        })}
+                      </AnimatePresence>
+                    </div>
+                  ) : (
+                    <div className="node-table-container" style={{ background: 'rgba(15, 23, 42, 0.4)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
+                        <thead style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                          <tr>
+                            <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600 }}>Target</th>
+                            <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600 }}>Status</th>
+                            <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600 }}>Avg Latency</th>
+                            <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600 }}>Packet Loss</th>
+                            <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600 }}>Uptime</th>
+                            <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600 }}>Jitter</th>
                           </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                        </thead>
+                        <tbody>
+                          {summaryData.map(s => {
+                            const ip = s.target_ip || s.target;
+                            const info = IP_INFO[ip] || { label: ip, color: '#06b6d4', icon: <Server size={16}/> };
+                            const isSuccess = s.last_status === 'success' || s.last_status === 'sucesso';
+                            const uptime = s.total_pings > 0 ? (s.successful / s.total_pings * 100).toFixed(1) : 0;
+                            const loss = s.total_pings > 0 ? ((s.total_pings - s.successful) / s.total_pings * 100).toFixed(1) : 0;
+                            
+                            return (
+                              <tr key={ip} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                <td style={{ padding: '12px 16px' }}>
+                                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                    <span style={{ fontWeight: 600, color: '#e2e8f0' }}>{info.label}</span>
+                                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: '#94a3b8' }}>{ip}</span>
+                                  </div>
+                                </td>
+                                <td style={{ padding: '12px 16px' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <div className={`status-dot ${isSuccess ? 'healthy' : 'down'}`} style={{ position: 'relative', top: 0, left: 0 }} />
+                                    <span style={{ color: isSuccess ? '#10b981' : '#ef4444' }}>{isSuccess ? 'ONLINE' : 'OFFLINE'}</span>
+                                  </div>
+                                </td>
+                                <td style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)' }}>{s.avg_latency || 0} ms</td>
+                                <td style={{ padding: '12px 16px', color: loss > 0 ? '#ef4444' : '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{loss}%</td>
+                                <td style={{ padding: '12px 16px', color: uptime < 99 ? '#f59e0b' : '#10b981', fontFamily: 'var(--font-mono)' }}>{uptime}%</td>
+                                <td style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)' }}>{s.jitter || 0}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            <div className="alert-section">
-              <div className="section-title">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Terminal size={20} />
-                  ALERT LOG
+                <div className="alert-section">
+                  <div className="section-title">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Terminal size={20} />
+                      ALERT LOG
+                    </div>
+                  </div>
+                  <div className="alert-container">
+                    <div className="alert-list">
+                      <AnimatePresence>
+                        {alerts.map((alert, idx) => (
+                          <motion.div layout initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} key={idx + alert.time} className={`alert-item ${alert.type}`}>
+                            <div className="alert-header-row">
+                              <span className="alert-title">{alert.title}</span>
+                              <span className="alert-time">{alert.time}</span>
+                            </div>
+                            <span className="alert-detail">{alert.detail}</span>
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="alert-container">
-                <div className="alert-list">
-                  <AnimatePresence>
-                    {alerts.map((alert, idx) => (
-                      <motion.div layout initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} key={idx + alert.time} className={`alert-item ${alert.type}`}>
-                        <div className="alert-header-row">
-                          <span className="alert-title">{alert.title}</span>
-                          <span className="alert-time">{alert.time}</span>
-                        </div>
-                        <span className="alert-detail">{alert.detail}</span>
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
-                </div>
-              </div>
-            </div>
-          </motion.div>
+              </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="chart-section">
-            <div className="section-title">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Activity size={20} />
-                GLOBAL LATENCY TREND
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="chart-section">
+                <div className="section-title">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Activity size={20} />
+                    GLOBAL LATENCY TREND
+                  </div>
+                </div>
+                <div className="chart-container">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={combinedChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="latencyGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#06b6d4" stopOpacity={0.4} />
+                          <stop offset="100%" stopColor="#06b6d4" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+                      <XAxis dataKey="timestamp" stroke="#64748b" tickFormatter={formatTime} tick={{ fontSize: 12, fill: '#64748b' }} minTickGap={30} axisLine={false} tickLine={false} />
+                      <YAxis stroke="#64748b" tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Area type="monotone" dataKey="latency_ms" stroke="#06b6d4" strokeWidth={3} fill="url(#latencyGradient)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </motion.div>
+            </>
+          )}
+
+          {activeNav === 'topology' && (
+            <div style={{ background: 'rgba(15, 23, 42, 0.5)', padding: '24px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Share2 size={22} color="#06b6d4" /> TOPOLOGIA E MAPEAMENTO DE REDE (HUB & SPOKE)
+              </h2>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', padding: '20px 0' }}>
+                {summaryData.map(s => {
+                  const ip = s.target_ip || s.target;
+                  const info = IP_INFO[ip] || { label: ip, color: '#06b6d4' };
+                  const isSuccess = s.last_status === 'success' || s.last_status === 'sucesso';
+                  return (
+                    <div key={ip} style={{ background: 'rgba(255,255,255,0.03)', padding: '18px', borderRadius: '10px', border: `1px solid ${isSuccess ? '#10b98133' : '#ef444433'}` }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                        <span style={{ fontWeight: 600, color: '#e2e8f0' }}>{info.label}</span>
+                        <span style={{ padding: '3px 8px', borderRadius: '4px', fontSize: '11px', background: isSuccess ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)', color: isSuccess ? '#10b981' : '#ef4444', fontFamily: 'var(--font-mono)' }}>
+                          {isSuccess ? 'ONLINE' : 'OFFLINE'}
+                        </span>
+                      </div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', color: '#94a3b8', marginBottom: '8px' }}>IP: {ip}</div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#64748b' }}>
+                        <span>Avg Latency: <strong style={{ color: '#06b6d4' }}>{s.avg_latency || 0}ms</strong></span>
+                        <span>Uptime: <strong style={{ color: '#10b981' }}>{((s.successful || 0) / (s.total_pings || 1) * 100).toFixed(1)}%</strong></span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-            <div className="chart-container">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={combinedChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="latencyGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#06b6d4" stopOpacity={0.4} />
-                      <stop offset="100%" stopColor="#06b6d4" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
-                  <XAxis dataKey="timestamp" stroke="#64748b" tickFormatter={formatTime} tick={{ fontSize: 12, fill: '#64748b' }} minTickGap={30} axisLine={false} tickLine={false} />
-                  <YAxis stroke="#64748b" tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Area type="monotone" dataKey="latency_ms" stroke="#06b6d4" strokeWidth={3} fill="url(#latencyGradient)" />
-                </AreaChart>
-              </ResponsiveContainer>
+          )}
+
+          {activeNav === 'inventory' && (
+            <div style={{ background: 'rgba(15, 23, 42, 0.5)', padding: '24px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h2 style={{ fontSize: '18px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Server size={22} color="#06b6d4" /> INVENTÁRIO DE ENDPOINTS MONITORAIS
+                </h2>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <input
+                    type="text"
+                    placeholder="Filtrar por nome ou IP..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    style={{ padding: '8px 12px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: '#fff' }}
+                  />
+                </div>
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
+                <thead style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                  <tr>
+                    <th style={{ padding: '14px 16px', color: '#64748b' }}>Endpoint / Rótulo</th>
+                    <th style={{ padding: '14px 16px', color: '#64748b' }}>Endereço IP / DNS</th>
+                    <th style={{ padding: '14px 16px', color: '#64748b' }}>Status Atual</th>
+                    <th style={{ padding: '14px 16px', color: '#64748b' }}>Latência Média</th>
+                    <th style={{ padding: '14px 16px', color: '#64748b' }}>Pacotes Perdidos</th>
+                    <th style={{ padding: '14px 16px', color: '#64748b' }}>Conformidade SLA</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredNodes.map(s => {
+                    const ip = s.target_ip || s.target;
+                    const info = IP_INFO[ip] || { label: ip };
+                    const isSuccess = s.last_status === 'success' || s.last_status === 'sucesso';
+                    const uptime = ((s.successful || 0) / (s.total_pings || 1) * 100).toFixed(1);
+                    return (
+                      <tr key={ip} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                        <td style={{ padding: '14px 16px', fontWeight: 600, color: '#e2e8f0' }}>{info.label}</td>
+                        <td style={{ padding: '14px 16px', fontFamily: 'var(--font-mono)', color: '#94a3b8' }}>{ip}</td>
+                        <td style={{ padding: '14px 16px' }}>
+                          <span style={{ color: isSuccess ? '#10b981' : '#ef4444', fontWeight: 600 }}>
+                            {isSuccess ? '● ONLINE' : '● OFFLINE'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '14px 16px', fontFamily: 'var(--font-mono)' }}>{s.avg_latency || 0} ms</td>
+                        <td style={{ padding: '14px 16px', fontFamily: 'var(--font-mono)' }}>{((s.total_pings - s.successful) / (s.total_pings || 1) * 100).toFixed(1)}%</td>
+                        <td style={{ padding: '14px 16px' }}>
+                          <span style={{ padding: '4px 10px', borderRadius: '12px', background: uptime >= 99 ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)', color: uptime >= 99 ? '#10b981' : '#f59e0b', fontSize: '12px' }}>
+                            {uptime >= 99 ? 'Em Conformidade (99.9%)' : 'Atenção SLA'}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-          </motion.div>
+          )}
+
+          {activeNav === 'alerts' && (
+            <div style={{ background: 'rgba(15, 23, 42, 0.5)', padding: '24px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Terminal size={22} color="#ef4444" /> HISTÓRICO DE ALERTAS & ANOMALIAS IA
+              </h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {alerts.length === 0 ? (
+                  <div style={{ color: '#64748b', textAlign: 'center', padding: '40px' }}>Nenhum alerta crítico registrado recentemente.</div>
+                ) : (
+                  alerts.map((alert, idx) => (
+                    <div key={idx} style={{ padding: '16px', background: 'rgba(239, 68, 68, 0.1)', borderLeft: '4px solid #ef4444', borderRadius: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                        <strong style={{ color: '#fca5a5' }}>{alert.title}</strong>
+                        <span style={{ fontSize: '12px', color: '#94a3b8', fontFamily: 'var(--font-mono)' }}>{alert.time}</span>
+                      </div>
+                      <div style={{ fontSize: '13px', color: '#e2e8f0' }}>{alert.detail}</div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
+          {activeNav === 'traffic' && (
+            <div style={{ background: 'rgba(15, 23, 42, 0.5)', padding: '24px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Activity size={22} color="#06b6d4" /> ANÁLISE PROFUNDA DE TRÁFEGO & LATÊNCIA (PERCENTIS P50 / P90 / P99)
+              </h2>
+              <div style={{ height: '360px', marginTop: '20px' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={summaryData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                    <XAxis dataKey="target_ip" stroke="#64748b" />
+                    <YAxis stroke="#64748b" />
+                    <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid #334155' }} />
+                    <Legend />
+                    <Bar dataKey="avg_latency" name="Latência Média (ms)" fill="#06b6d4" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="jitter" name="Jitter (ms)" fill="#10b981" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
         </main>
       </div>
     </div>
   );
 }
+
