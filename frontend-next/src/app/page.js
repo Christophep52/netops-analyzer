@@ -113,7 +113,7 @@ export default function NetOpsDashboard() {
 
   const downloadPDF = async () => {
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8003';
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8002';
       const response = await fetch(`${API_URL}/api/export`);
       if (!response.ok) throw new Error('Network response was not ok');
       const blob = await response.blob();

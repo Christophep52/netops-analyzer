@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8003';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8002';
 
 const IP_INFO = {
   '8.8.8.8':        { label: 'Google DNS',           color: '#06b6d4', icon: 'dns' },
@@ -81,11 +81,11 @@ export const useAppStore = create((set, get) => ({
         target: ip,
         total_pings: Math.floor(Math.random() * 500) + 200,
         successful: Math.floor(Math.random() * 450) + 180,
-        avg_latency: parseFloat((Math.random() * 80 + 10).toFixed(1)),
-        min_latency: parseFloat((Math.random() * 20 + 2).toFixed(1)),
-        max_latency: parseFloat((Math.random() * 200 + 50).toFixed(1)),
-        jitter: parseFloat((Math.random() * 15 + 1).toFixed(1)),
-        last_status: Math.random() > 0.1 ? 'success' : 'timeout',
+        avg_latency: parseFloat((Math.random() * 25 + 48).toFixed(1)),
+        min_latency: parseFloat((Math.random() * 10 + 42).toFixed(1)),
+        max_latency: parseFloat((Math.random() * 80 + 75).toFixed(1)),
+        jitter: parseFloat((Math.random() * 8 + 1.5).toFixed(1)),
+        last_status: Math.random() > 0.05 ? 'success' : 'timeout',
       }));
       const mockMetrics = {};
       Object.keys(IP_INFO).forEach(ip => {
