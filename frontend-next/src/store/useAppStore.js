@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import axios from 'axios';
 
-const API_URL = '';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8003';
 
 const IP_INFO = {
   '8.8.8.8':        { label: 'Google DNS',           color: '#06b6d4', icon: 'dns' },
@@ -18,7 +18,9 @@ const IP_INFO = {
 export const useAppStore = create((set, get) => ({
   metricsData: {},
   summaryData: [],
+  topologyData: { nodes: [], edges: [] },
   aiInsights: [],
+  latencyHistoryData: {},
   loading: true,
   viewMode: 'grid',
   lastUpdate: null,
@@ -37,13 +39,25 @@ export const useAppStore = create((set, get) => ({
 
   fetchAll: async () => {
     try {
-      const [metricsRes, summaryRes] = await Promise.all([
-        axios.get('/api/metrics', { timeout: 8000 }),
-        axios.get('/api/summary', { timeout: 8000 })
+      const [metricsRes, summaryRes, topologyRes] = await Promise.all([
+        axios.get(`${API_URL}/api/metrics`, { timeout: 8000 }),
+        axios.get(`${API_URL}/api/summary`, { timeout: 8000 }),
+        axios.get(`${API_URL}/api/topology`, { timeout: 8000 }).catch(() => ({ data: { nodes: [], edges: [] } }))
       ]);
+
+      const ips = Object.keys(IP_INFO);
+      const historyPromises = ips.map(ip => axios.get(`${API_URL}/api/latency-history?ip=${ip}`, { timeout: 8000 }).catch(() => ({ data: { data: [] } })));
+      const historyResults = await Promise.all(historyPromises);
+      const historyData = {};
+      ips.forEach((ip, idx) => {
+          historyData[ip] = historyResults[idx].data.data;
+      });
+
       set({
         metricsData: metricsRes.data.data,
         summaryData: summaryRes.data.data,
+        topologyData: topologyRes.data.nodes ? topologyRes.data : { nodes: [], edges: [] },
+        latencyHistoryData: historyData,
         lastUpdate: new Date(),
         loading: false
       });
@@ -72,9 +86,25 @@ export const useAppStore = create((set, get) => ({
           status: 'success',
         }));
       });
+
+      const mockNodes = [
+        {"id": "core-router", "label": "Core Router", "type": "router"},
+        {"id": "switch-1", "label": "Main Switch", "type": "switch"},
+      ];
+      const mockEdges = [
+        {"source": "core-router", "target": "switch-1"}
+      ];
+      Object.keys(IP_INFO).forEach(ip => {
+        const id = `server-${ip}`;
+        mockNodes.push({"id": id, "label": `${IP_INFO[ip].label}\n${ip}`, "type": "server"});
+        mockEdges.push({"source": "switch-1", "target": id});
+      });
+
       set({
         summaryData: mockSummary,
         metricsData: mockMetrics,
+        topologyData: { nodes: mockNodes, edges: mockEdges },
+        latencyHistoryData: {},
         aiInsights: [
           { severity: 'warning', message: 'Latency spike detected on AWS us-east-1 node', target_ip: '3.218.180.0', confidence_zone: 60 },
           { severity: 'info', message: 'All DNS resolvers responding within normal parameters', target_ip: '8.8.8.8', confidence_zone: 95 },

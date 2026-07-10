@@ -55,3 +55,14 @@ def test_read_summary():
     assert data["status"] == "ok"
     assert "data" in data
     assert isinstance(data["data"], list)
+
+
+def test_get_topology():
+    response = client.get("/api/topology")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "ok"
+    assert "nodes" in data
+    assert "edges" in data
+    assert len(data["nodes"]) > 0
+    assert len(data["edges"]) > 0

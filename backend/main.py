@@ -2,7 +2,11 @@ import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from database import init_db, get_recent_metrics, get_summary
+from fastapi.responses import StreamingResponse
+import io
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from database import init_db, get_recent_metrics, get_summary, get_latency_history, insert_metric
 from monitor import monitor_loop, TARGETS
 from ml_engine import analyze_network_anomalies
 
@@ -45,6 +49,12 @@ app.add_middleware(
 async def list_targets():
     """Retorna a lista de alvos monitorados."""
     return {"targets": TARGETS}
+
+@app.get("/api/latency-history")
+async def read_latency_history(ip: str):
+    """Returns latency history for a specific IP."""
+    data = await get_latency_history(ip, 24)
+    return {"status": "ok", "data": data}
 
 @app.get("/api/metrics")
 async def read_metrics():
@@ -95,3 +105,68 @@ async def read_ai_insights():
         
     ai_analysis = analyze_network_anomalies(stats, grouped)
     return ai_analysis
+
+@app.get("/api/topology")
+async def get_topology():
+    """Returns network topology nodes and edges."""
+    nodes = [
+        {"id": "core-router", "label": "Core Router", "type": "router"},
+        {"id": "switch-1", "label": "Main Switch", "type": "switch"},
+        {"id": "switch-2", "label": "Secondary Switch", "type": "switch"},
+    ]
+    edges = [
+        {"source": "core-router", "target": "switch-1"},
+        {"source": "core-router", "target": "switch-2"},
+    ]
+
+    for target in TARGETS:
+        node_id = f"server-{target['ip']}"
+        nodes.append({"id": node_id, "label": f"{target['label']}\n{target['ip']}", "type": "server"})
+        # connect to switch-1 for simplicity
+        edges.append({"source": "switch-1", "target": node_id})
+
+    return {"status": "ok", "nodes": nodes, "edges": edges}
+
+@app.post("/api/chaos")
+async def simulate_chaos():
+    """Simulates a severe network outage by injecting timeout records for 10.0.0.1."""
+    target_ip = "10.0.0.1"
+    for _ in range(15):
+        await insert_metric(target_ip, 0.0, "timeout")
+    return {"status": "ok", "message": "Chaos injected: 15 timeout metrics added for 10.0.0.1"}
+
+@app.get("/api/export")
+async def export_pdf():
+    """Generates a PDF report with recent network metrics."""
+    stats = await get_summary()
+    
+    buffer = io.BytesIO()
+    p = canvas.Canvas(buffer, pagesize=letter)
+    
+    p.setFont("Helvetica-Bold", 16)
+    p.drawString(50, 750, "NetOps Analyzer - Network Report")
+    
+    p.setFont("Helvetica", 12)
+    y = 710
+    for s in stats:
+        ip = s.get("target_ip") or s.get("target", "Unknown")
+        avg_lat = s.get("avg_latency", 0)
+        loss = s.get("packet_loss_percentage", 0)
+        
+        p.drawString(50, y, f"Target: {ip}")
+        p.drawString(250, y, f"Latency: {avg_lat} ms")
+        p.drawString(400, y, f"Packet Loss: {loss}%")
+        
+        y -= 20
+        if y < 50:
+            p.showPage()
+            y = 750
+            
+    p.save()
+    buffer.seek(0)
+    
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": "attachment; filename=netops_report.pdf"}
+    )

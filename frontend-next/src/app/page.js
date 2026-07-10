@@ -36,7 +36,7 @@ const NAV_ITEMS = [
 
 export default function NetOpsDashboard() {
   const { 
-    metricsData, summaryData, aiInsights, loading, 
+    metricsData, summaryData, topologyData, aiInsights, latencyHistoryData, loading, 
     viewMode, lastUpdate, alerts, setViewMode, fetchAll 
   } = useAppStore();
 
@@ -56,10 +56,10 @@ export default function NetOpsDashboard() {
     const totalPings = summaryData.reduce((sum, s) => sum + (s.total_pings || 0), 0);
     const totalSuccess = summaryData.reduce((sum, s) => sum + (s.successful || 0), 0);
     const avgLatency = summaryData.reduce((sum, s) => sum + (s.avg_latency || 0), 0) / summaryData.length;
-    const packetLoss = totalPings > 0 ? ((totalPings - totalSuccess) / totalPings * 100) : 0;
+    const packetLoss = summaryData.length > 0 ? (summaryData.reduce((sum, s) => sum + (s.packet_loss_percentage || 0), 0) / summaryData.length) : 0;
     const uptime = totalPings > 0 ? (totalSuccess / totalPings * 100) : 0;
     const healthyNodes = summaryData.filter(s => {
-      const loss = s.total_pings > 0 ? ((s.total_pings - s.successful) / s.total_pings * 100) : 100;
+      const loss = s.packet_loss_percentage || 0;
       return loss < 5;
     }).length;
     return { totalPings, avgLatency: avgLatency.toFixed(1), packetLoss: packetLoss.toFixed(1), uptime: uptime.toFixed(1), healthyNodes };
@@ -97,7 +97,7 @@ export default function NetOpsDashboard() {
       summaryData.map(s => {
         const ip = s.target_ip || s.target;
         const info = IP_INFO[ip] || { label: ip };
-        const loss = s.total_pings > 0 ? ((s.total_pings - s.successful) / s.total_pings * 100).toFixed(1) : 0;
+        const loss = s.packet_loss_percentage !== undefined ? s.packet_loss_percentage : 0;
         const uptime = s.total_pings > 0 ? (s.successful / s.total_pings * 100).toFixed(1) : 0;
         return `"${ip}","${info.label}",${s.avg_latency || 0},${loss},${uptime},${s.jitter || 0}`;
       }).join("\n");
@@ -108,6 +108,35 @@ export default function NetOpsDashboard() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const downloadPDF = async () => {
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8003';
+      const response = await fetch(`${API_URL}/api/export`);
+      if (!response.ok) throw new Error('Network response was not ok');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'netops_report.pdf');
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("PDF export error:", err);
+    }
+  };
+
+  const triggerChaos = async () => {
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8003';
+      await fetch(`${API_URL}/api/chaos`, { method: 'POST' });
+      fetchAll();
+    } catch (err) {
+      console.error("Chaos error:", err);
+    }
   };
 
   const CustomTooltip = ({ active, payload, label }) => {
@@ -169,6 +198,26 @@ export default function NetOpsDashboard() {
           >
             <Download size={14} /> EXPORT CSV
           </button>
+          <button 
+            onClick={downloadPDF}
+            style={{
+              padding: '6px 12px', background: 'rgba(6,182,212,0.15)', border: '1px solid #06b6d4',
+              color: '#06b6d4', borderRadius: '6px', cursor: 'pointer', fontFamily: 'var(--font-mono)',
+              fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px'
+            }}
+          >
+            <Download size={14} /> EXPORT PDF
+          </button>
+          <button
+            onClick={triggerChaos}
+            style={{
+              padding: '6px 12px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444',
+              color: '#ef4444', borderRadius: '6px', cursor: 'pointer', fontFamily: 'var(--font-mono)',
+              fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px'
+            }}
+          >
+            <AlertTriangle size={14} /> Simular Apagão de Rede
+          </button>
           <div className="online-badge">
             <div className="online-dot" />
             ONLINE
@@ -214,7 +263,7 @@ export default function NetOpsDashboard() {
                 <span className="stat-title">Packet Loss</span>
                 <AlertTriangle className="stat-icon" size={20} />
               </div>
-              <span className="stat-value" style={{ color: 'var(--color-danger)' }}>{globalStats.packetLoss}%</span>
+              <span className="stat-value" style={{ color: parseFloat(globalStats.packetLoss) > 0 ? 'var(--color-warning)' : 'var(--color-healthy)' }}>{globalStats.packetLoss}%</span>
             </div>
             <div className="stat-card">
               <div className="stat-header">
@@ -250,8 +299,8 @@ export default function NetOpsDashboard() {
                         {summaryData.map(s => {
                           const ip = s.target_ip || s.target;
                           const info = IP_INFO[ip] || { label: ip, color: '#06b6d4', icon: <Server size={16}/> };
-                          const nodeData = metricsData[ip] || [];
-                          const latest = nodeData[nodeData.length - 1] || {};
+                          const nodeData = latencyHistoryData[ip] || metricsData[ip] || [];
+                          const latest = (metricsData[ip] && metricsData[ip][metricsData[ip].length - 1]) || {};
                           const isSuccess = latest.status === 'sucesso' || latest.status === 'success';
                           const latency = latest.latency_ms || 0;
                           const isHealthy = isSuccess && latency < 100;
@@ -277,8 +326,14 @@ export default function NetOpsDashboard() {
                                 <div className="node-sub-metrics">
                                   <div className="sub-metric">
                                     <span className="sub-metric-label">Loss</span>
+                                    <span className="sub-metric-value" style={{ color: (s.packet_loss_percentage > 0) ? 'var(--color-warning)' : 'inherit' }}>
+                                      {s.packet_loss_percentage || 0}%
+                                    </span>
+                                  </div>
+                                  <div className="sub-metric">
+                                    <span className="sub-metric-label">Uptime</span>
                                     <span className="sub-metric-value">
-                                      {s.total_pings > 0 ? ((s.total_pings - (s.successful || 0)) / s.total_pings * 100).toFixed(1) : 0}%
+                                      {s.total_pings > 0 ? (s.successful / s.total_pings * 100).toFixed(1) : 0}%
                                     </span>
                                   </div>
                                   <div className="sub-metric">
@@ -308,7 +363,7 @@ export default function NetOpsDashboard() {
                               <div className="node-sparkline">
                                 <ResponsiveContainer width="100%" height="100%">
                                   <AreaChart data={nodeData}>
-                                    <Area type="monotone" dataKey="latency_ms" stroke={info.color} fill="none" strokeWidth={2} isAnimationActive={false} />
+                                    <Area type="monotone" dataKey="latency" stroke={info.color} fill="none" strokeWidth={2} isAnimationActive={true} animationDuration={300} animationEasing="ease-in-out" />
                                   </AreaChart>
                                 </ResponsiveContainer>
                               </div>
@@ -336,7 +391,7 @@ export default function NetOpsDashboard() {
                             const info = IP_INFO[ip] || { label: ip, color: '#06b6d4', icon: <Server size={16}/> };
                             const isSuccess = s.last_status === 'success' || s.last_status === 'sucesso';
                             const uptime = s.total_pings > 0 ? (s.successful / s.total_pings * 100).toFixed(1) : 0;
-                            const loss = s.total_pings > 0 ? ((s.total_pings - s.successful) / s.total_pings * 100).toFixed(1) : 0;
+                            const loss = s.packet_loss_percentage !== undefined ? s.packet_loss_percentage : 0;
                             
                             return (
                               <tr key={ip} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
@@ -410,7 +465,7 @@ export default function NetOpsDashboard() {
                       <XAxis dataKey="timestamp" stroke="#64748b" tickFormatter={formatTime} tick={{ fontSize: 12, fill: '#64748b' }} minTickGap={30} axisLine={false} tickLine={false} />
                       <YAxis stroke="#64748b" tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} />
                       <Tooltip content={<CustomTooltip />} />
-                      <Area type="monotone" dataKey="latency_ms" stroke="#06b6d4" strokeWidth={3} fill="url(#latencyGradient)" />
+                      <Area type="monotone" dataKey="latency_ms" stroke="#06b6d4" strokeWidth={3} fill="url(#latencyGradient)" isAnimationActive={true} animationDuration={500} animationEasing="ease-in-out" />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
@@ -421,30 +476,61 @@ export default function NetOpsDashboard() {
           {activeNav === 'topology' && (
             <div style={{ background: 'rgba(15, 23, 42, 0.5)', padding: '24px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
               <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Share2 size={22} color="#06b6d4" /> TOPOLOGIA E MAPEAMENTO DE REDE (HUB & SPOKE)
+                <Share2 size={22} color="#06b6d4" /> TOPOLOGIA E MAPEAMENTO DE REDE
               </h2>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', padding: '20px 0' }}>
-                {summaryData.map(s => {
-                  const ip = s.target_ip || s.target;
-                  const info = IP_INFO[ip] || { label: ip, color: '#06b6d4' };
-                  const isSuccess = s.last_status === 'success' || s.last_status === 'sucesso';
-                  return (
-                    <div key={ip} style={{ background: 'rgba(255,255,255,0.03)', padding: '18px', borderRadius: '10px', border: `1px solid ${isSuccess ? '#10b98133' : '#ef444433'}` }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                        <span style={{ fontWeight: 600, color: '#e2e8f0' }}>{info.label}</span>
-                        <span style={{ padding: '3px 8px', borderRadius: '4px', fontSize: '11px', background: isSuccess ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)', color: isSuccess ? '#10b981' : '#ef4444', fontFamily: 'var(--font-mono)' }}>
-                          {isSuccess ? 'ONLINE' : 'OFFLINE'}
-                        </span>
-                      </div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', color: '#94a3b8', marginBottom: '8px' }}>IP: {ip}</div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#64748b' }}>
-                        <span>Avg Latency: <strong style={{ color: '#06b6d4' }}>{s.avg_latency || 0}ms</strong></span>
-                        <span>Uptime: <strong style={{ color: '#10b981' }}>{((s.successful || 0) / (s.total_pings || 1) * 100).toFixed(1)}%</strong></span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              {(() => {
+                if (!topologyData || !topologyData.nodes || topologyData.nodes.length === 0) {
+                  return <div style={{ color: '#64748b' }}>Topology data loading or not available.</div>;
+                }
+                const { nodes, edges } = topologyData;
+                const width = 800;
+                const height = 500;
+                const positions = {};
+                
+                const servers = nodes.filter(n => n.type === 'server');
+                const switches = nodes.filter(n => n.type === 'switch');
+                const routers = nodes.filter(n => n.type === 'router');
+
+                routers.forEach((r, i) => { positions[r.id] = { x: width / 2, y: 50 }; });
+                switches.forEach((s, i) => { positions[s.id] = { x: (width / (switches.length + 1)) * (i + 1), y: 150 }; });
+                servers.forEach((s, i) => {
+                  const cols = 5;
+                  const row = Math.floor(i / cols);
+                  const col = i % cols;
+                  positions[s.id] = { x: (width / (cols + 1)) * (col + 1), y: 280 + row * 80 };
+                });
+
+                return (
+                  <div style={{ width: '100%', height: '500px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', overflow: 'hidden' }}>
+                    <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`}>
+                      {edges.map((e, i) => {
+                        const p1 = positions[e.source];
+                        const p2 = positions[e.target];
+                        if (!p1 || !p2) return null;
+                        return (
+                          <line key={i} x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke="rgba(6,182,212,0.4)" strokeWidth="2" />
+                        );
+                      })}
+                      {nodes.map(n => {
+                        const p = positions[n.id];
+                        if (!p) return null;
+                        const color = n.type === 'router' ? '#ef4444' : n.type === 'switch' ? '#f59e0b' : '#10b981';
+                        return (
+                          <g key={n.id} transform={`translate(${p.x}, ${p.y})`}>
+                            <circle r="20" fill={color} opacity="0.2" />
+                            <circle r="10" fill={color} />
+                            <text y="25" fill="#e2e8f0" fontSize="11" textAnchor="middle" fontFamily="var(--font-mono)">
+                              {n.label.split('\n').map((line, idx) => (
+                                <tspan x="0" dy={idx === 0 ? 0 : 14} key={idx}>{line}</tspan>
+                              ))}
+                            </text>
+                          </g>
+                        );
+                      })}
+                    </svg>
+                  </div>
+                );
+              })()}
             </div>
           )}
 
@@ -491,7 +577,7 @@ export default function NetOpsDashboard() {
                           </span>
                         </td>
                         <td style={{ padding: '14px 16px', fontFamily: 'var(--font-mono)' }}>{s.avg_latency || 0} ms</td>
-                        <td style={{ padding: '14px 16px', fontFamily: 'var(--font-mono)' }}>{((s.total_pings - s.successful) / (s.total_pings || 1) * 100).toFixed(1)}%</td>
+                        <td style={{ padding: '14px 16px', color: (s.packet_loss_percentage > 0) ? 'var(--color-warning)' : 'inherit', fontFamily: 'var(--font-mono)' }}>{s.packet_loss_percentage || 0}%</td>
                         <td style={{ padding: '14px 16px' }}>
                           <span style={{ padding: '4px 10px', borderRadius: '12px', background: uptime >= 99 ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)', color: uptime >= 99 ? '#10b981' : '#f59e0b', fontSize: '12px' }}>
                             {uptime >= 99 ? 'Em Conformidade (99.9%)' : 'Atenção SLA'}
@@ -541,8 +627,8 @@ export default function NetOpsDashboard() {
                     <YAxis stroke="#64748b" />
                     <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid #334155' }} />
                     <Legend />
-                    <Bar dataKey="avg_latency" name="Latência Média (ms)" fill="#06b6d4" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="jitter" name="Jitter (ms)" fill="#10b981" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="avg_latency" name="Latência Média (ms)" fill="#06b6d4" radius={[4, 4, 0, 0]} isAnimationActive={true} animationDuration={500} animationEasing="ease-out" />
+                    <Bar dataKey="jitter" name="Jitter (ms)" fill="#10b981" radius={[4, 4, 0, 0]} isAnimationActive={true} animationDuration={500} animationEasing="ease-out" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

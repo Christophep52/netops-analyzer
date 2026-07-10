@@ -1,7 +1,10 @@
 import asyncio
 import platform
 import re
-from database import insert_metric, cleanup_old_metrics
+import logging
+from database import insert_metric, cleanup_old_metrics, insert_latency_history
+
+logger = logging.getLogger(__name__)
 
 TARGETS = [
     {"ip": "8.8.8.8",         "label": "Google DNS (Primario)"},
@@ -16,6 +19,7 @@ TARGETS = [
 ]
 
 def _build_ping_args(ip: str) -> list[str]:
+    """Constructs ping command arguments depending on the operating system."""
     sistema = platform.system().lower()
     if sistema == "windows":
         return ["ping", "-n", "1", "-w", "1000", ip]
@@ -23,6 +27,10 @@ def _build_ping_args(ip: str) -> list[str]:
         return ["ping", "-c", "1", "-W", "1", ip]
 
 async def ping_target(ip: str):
+    """
+    Pings a target IP asynchronously and stores the result.
+    Handles timeouts securely and suppresses verbose stack traces.
+    """
     args = _build_ping_args(ip)
     try:
         process = await asyncio.create_subprocess_exec(
@@ -36,6 +44,7 @@ async def ping_target(ip: str):
             except Exception:
                 pass
             await insert_metric(ip, 0.0, "timeout")
+            await insert_latency_history(ip, 0.0)
             return
 
         output = stdout.decode('utf-8', errors='ignore')
@@ -44,22 +53,33 @@ async def ping_target(ip: str):
             if match:
                 latency = float(match.group(1))
                 await insert_metric(ip, latency, "sucesso")
+                await insert_latency_history(ip, latency)
                 return
         await insert_metric(ip, 0.0, "timeout")
+        await insert_latency_history(ip, 0.0)
     except Exception as e:
-        print(f"Error pinging {ip}: {e}")
+        logger.error(f"Error pinging {ip}: {str(e)}")
         await insert_metric(ip, 0.0, "erro")
+        await insert_latency_history(ip, 0.0)
 
 async def monitor_loop():
+    """
+    Main loop for monitoring targets.
+    Periodically cleans up old metrics to prevent database bloat.
+    """
     loop_count = 0
     while True:
-        tasks = [ping_target(t["ip"]) for t in TARGETS]
-        await asyncio.gather(*tasks)
-        loop_count += 1
-        if loop_count >= 120: # Roughly every 10 minutes
-            try:
-                await cleanup_old_metrics(days=7)
-            except Exception as e:
-                print(f"Error during cleanup: {e}")
-            loop_count = 0
-        await asyncio.sleep(5)
+        try:
+            tasks = [ping_target(t["ip"]) for t in TARGETS]
+            await asyncio.gather(*tasks)
+            loop_count += 1
+            if loop_count >= 120:  # Roughly every 10 minutes
+                try:
+                    await cleanup_old_metrics(days=7)
+                except Exception as e:
+                    logger.error(f"Error during cleanup: {str(e)}")
+                loop_count = 0
+            await asyncio.sleep(5)
+        except Exception as e:
+            logger.error(f"Error in monitor loop: {str(e)}")
+            await asyncio.sleep(5)
