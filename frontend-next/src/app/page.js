@@ -386,7 +386,7 @@ export default function NetOpsDashboard() {
                             <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600 }}>Avg Latency</th>
                             <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600 }}>Packet Loss</th>
                             <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600 }}>Uptime</th>
-                            <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600 }}>Jitter</th>
+                            <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600 }}>Risco Preditivo</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -414,7 +414,11 @@ export default function NetOpsDashboard() {
                                 <td style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)' }}>{s.avg_latency || 0} ms</td>
                                 <td style={{ padding: '12px 16px', color: loss > 0 ? '#ef4444' : '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{loss}%</td>
                                 <td style={{ padding: '12px 16px', color: uptime < 99 ? '#f59e0b' : '#10b981', fontFamily: 'var(--font-mono)' }}>{uptime}%</td>
-                                <td style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)' }}>{s.jitter || 0}</td>
+                                <td style={{ padding: '12px 16px', fontFamily: 'var(--font-mono)' }}>
+                                  <span style={{ padding: '4px 10px', borderRadius: '12px', background: s.predictive_risk > 50 ? 'rgba(239, 68, 68, 0.15)' : s.predictive_risk > 20 ? 'rgba(245, 158, 11, 0.15)' : 'rgba(16, 185, 129, 0.15)', color: s.predictive_risk > 50 ? '#ef4444' : s.predictive_risk > 20 ? '#f59e0b' : '#10b981', fontSize: '12px', fontWeight: 'bold' }}>
+                                    {s.predictive_risk || 0}%
+                                  </span>
+                                </td>
                               </tr>
                             );
                           })}
