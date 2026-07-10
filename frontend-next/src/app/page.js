@@ -37,12 +37,13 @@ const NAV_ITEMS = [
 export default function NetOpsDashboard() {
   const { 
     metricsData, summaryData, topologyData, aiInsights, latencyHistoryData, loading, 
-    viewMode, lastUpdate, alerts, setViewMode, fetchAll 
+    viewMode, lastUpdate, alerts, setViewMode, fetchAll, triggerChaos 
   } = useAppStore();
 
   const [isMounted, setIsMounted] = useState(false);
   const [activeNav, setActiveNav] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
+  const [chaosIntensity, setChaosIntensity] = useState(50);
 
   useEffect(() => {
     setIsMounted(true);
@@ -129,16 +130,6 @@ export default function NetOpsDashboard() {
     }
   };
 
-  const triggerChaos = async () => {
-    try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8003';
-      await fetch(`${API_URL}/api/chaos`, { method: 'POST' });
-      fetchAll();
-    } catch (err) {
-      console.error("Chaos error:", err);
-    }
-  };
-
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       const d = payload[0].payload;
@@ -208,16 +199,29 @@ export default function NetOpsDashboard() {
           >
             <Download size={14} /> EXPORT PDF
           </button>
-          <button
-            onClick={triggerChaos}
-            style={{
-              padding: '6px 12px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444',
-              color: '#ef4444', borderRadius: '6px', cursor: 'pointer', fontFamily: 'var(--font-mono)',
-              fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px'
-            }}
-          >
-            <AlertTriangle size={14} /> Simular Apagão de Rede
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(239, 68, 68, 0.05)', padding: '4px 12px', borderRadius: '8px', border: '1px solid rgba(239,68,68,0.2)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <label style={{ fontSize: '10px', color: '#fca5a5', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>Chaos Intensity: {chaosIntensity}%</label>
+              <input 
+                type="range" 
+                min="1" 
+                max="100" 
+                value={chaosIntensity} 
+                onChange={(e) => setChaosIntensity(Number(e.target.value))}
+                style={{ width: '100px', accentColor: '#ef4444', cursor: 'pointer' }}
+              />
+            </div>
+            <button
+              onClick={() => triggerChaos(chaosIntensity)}
+              style={{
+                padding: '6px 12px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444',
+                color: '#ef4444', borderRadius: '6px', cursor: 'pointer', fontFamily: 'var(--font-mono)',
+                fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', height: 'fit-content'
+              }}
+            >
+              <AlertTriangle size={14} /> Simular Apagão de Rede
+            </button>
+          </div>
           <div className="online-badge">
             <div className="online-dot" />
             ONLINE

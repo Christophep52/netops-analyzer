@@ -9,6 +9,11 @@ from reportlab.lib.pagesizes import letter
 from database import init_db, get_recent_metrics, get_summary, get_latency_history, insert_metric
 from monitor import monitor_loop, TARGETS
 from ml_engine import analyze_network_anomalies
+from pydantic import BaseModel
+import random
+
+class ChaosPayload(BaseModel):
+    intensity: int
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -128,12 +133,20 @@ async def get_topology():
     return {"status": "ok", "nodes": nodes, "edges": edges}
 
 @app.post("/api/chaos")
-async def simulate_chaos():
-    """Simulates a severe network outage by injecting timeout records for 10.0.0.1."""
+async def simulate_chaos(payload: ChaosPayload):
+    """Simulates a network outage scaled by intensity."""
+    intensity = payload.intensity
     target_ip = "10.0.0.1"
+    
     for _ in range(15):
-        await insert_metric(target_ip, 0.0, "timeout")
-    return {"status": "ok", "message": "Chaos injected: 15 timeout metrics added for 10.0.0.1"}
+        if random.randint(1, 100) <= intensity:
+            await insert_metric(target_ip, 0.0, "timeout")
+        else:
+            # high latency scaled by intensity
+            latency = 10.0 + (intensity * 5.0) + random.uniform(0, 50)
+            await insert_metric(target_ip, latency, "success")
+            
+    return {"status": "ok", "message": f"Chaos injected with intensity {intensity} for 10.0.0.1"}
 
 @app.get("/api/export")
 async def export_pdf():

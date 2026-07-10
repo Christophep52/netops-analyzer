@@ -37,6 +37,15 @@ export const useAppStore = create((set, get) => ({
   
   addAlert: (alert) => set((state) => ({ alerts: [alert, ...state.alerts].slice(0, 20) })),
 
+  triggerChaos: async (intensity) => {
+    try {
+      await axios.post(`${API_URL}/api/chaos`, { intensity });
+      get().fetchAll();
+    } catch (err) {
+      console.error("Chaos error:", err);
+    }
+  },
+
   fetchAll: async () => {
     try {
       const [metricsRes, summaryRes, topologyRes] = await Promise.all([
