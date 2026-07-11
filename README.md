@@ -1,6 +1,12 @@
 # 🌐 NetOps Analyzer (Next.js 16 + AI Network Telemetry & Anomaly Engine)
 
 <div align="center">
+  <a href="#english">🇺🇸 English</a> | <a href="#português">🇧🇷 Português</a>
+</div>
+
+<br />
+
+<div align="center">
   <img src="dashboard.png" alt="NetOps Analyzer Dashboard" width="100%" />
 </div>
 
@@ -16,116 +22,89 @@
 
 ---
 
-## 🚀 Overview
+# <a id="english"></a>🇺🇸 English Documentation
 
+## 🚀 Overview
 **NetOps Analyzer** is an enterprise-class network observability and anomaly detection platform designed for continuous network performance monitoring, ICMP/SNMP telemetry analysis, and automated threat/jitter isolation.
 
 Featuring a **Next.js 16 App Router** dashboard equipped with AI Anomaly Confidence Zones, interactive topology inspections, and instant Command Palette controls, it provides Network Operations Centers (NOCs) with sub-second insight into network degradation and bandwidth anomalies.
 
----
-
 ## ✨ Key Enterprise Features
-
-- **🧠 AI Anomaly Confidence Zones**: Automatically overlays baseline confidence intervals on throughput and latency telemetry to instantly highlight traffic surges or packet loss.
-- **📡 Real-Time ICMP & Telemetry Polling**: Continuous telemetry collection from edge routers, switches, and core network nodes.
-- **📊 Responsive Glassmorphism Telemetry Grid**: High-density interactive charts built with **Recharts** and **Framer Motion** for smooth, zero-layout-shift visualization.
-- **⚡ Keyboard Command Palette (`Ctrl+K`)**: Rapid execution of network operations (e.g., BGP route dampening, interface isolation, traceroute triggers).
-- **🐳 Hardened Container Deployment**: Optimized for zero-downtime containerized deployments with kernel ICMP privileges.
-
----
-
-## 🏛️ System Architecture
-
-```mermaid
-graph TD
-    NOC["NOC Operator"] -->|HTTP / REST| Next["Next.js 16 App Router (Frontend)"]
-    Next -->|API Queries| API["FastAPI NetOps Gateway (Backend)"]
-    API -->|ICMP / SNMP Probes| Nodes["Core Network Nodes / Edge Devices"]
-    API -->|Store Time-Series| TSDB[("Telemetry Data Store")]
-```
-
----
+- **🧠 Scikit-Learn IsolationForest AI Engine**: Unsupervised ML model analyzing time-series latency curves to predict packet drop trends and network instability (`global_stability_index`).
+- **⚡ Asynchronous OS Subprocess ICMP Probing**: High-frequency non-blocking pings across multiple edge targets (`Google DNS`, `Cloudflare`, `AWS us-east-1`).
+- **📈 Real-Time Telemetry & Confidence Zones**: Visual time-series charts with dynamic standard deviation bounds and anomaly highlighting.
+- **🛠️ Command Palette (`Ctrl+K`)**: Rapid execution of network trace routes, target additions, and immediate alert triage.
 
 ## 🛠️ Quick Start & Live Demo
 
 ### ⚡ 1-Command Live Integrated Demo (Instant Test)
-Want to test the Async ICMP Probes, Scikit-Learn IsolationForest Anomaly Engine & SQLite DB immediately?
+Want to test the Async ICMP Probes, Scikit-Learn IsolationForest Anomaly Engine & SQLite DB immediately without Docker?
 ```bash
 cd backend
 python run_demo_real.py
 ```
 
 ### 🐳 Full Enterprise Stack (Docker Compose)
-Deploy the complete enterprise observability stack (Next.js 16 App Router frontend + FastAPI telemetry engine) using Docker Compose:
-
+Deploy the complete enterprise observability stack (Next.js 16 App Router frontend + FastAPI telemetry engine):
 ```bash
-# Clone the repository
-git clone https://github.com/Christophep52/netops-analyzer.git
-cd netops-analyzer
-
-# Build and start services in detached mode
 docker compose up --build -d
-
-# Follow container logs in real time
-docker compose logs -f
-
-# Stop and remove containers when done
-docker compose down
 ```
 
-### Access Points
-- **Enterprise Observability UI (Next.js)**: `http://localhost:3003`
-- **FastAPI Telemetry Gateway Docs (Swagger UI)**: `http://localhost:8002/docs`
-- **FastAPI ReDoc OpenAPI Spec**: `http://localhost:8002/redoc`
-
----
-
-## 💻 Local Development Setup
-
-### 1. Backend API (FastAPI)
-```bash
-cd backend
-python -m venv venv
-
-# Linux / macOS
-source venv/bin/activate
-# Windows PowerShell
-# .\venv\Scripts\Activate.ps1
-
-pip install -r requirements.txt
-uvicorn main:app --reload --port 8000
-```
-
-### 2. Frontend UI (Next.js 16)
-```bash
-cd frontend-next
-npm install
-npm run dev
-```
-
----
+| Service | Local Endpoint | Description |
+| :--- | :--- | :--- |
+| **NOC Dashboard (Next.js 16)** | `http://localhost:3000` | Real-Time Latency Charts & AI Stability Index |
+| **FastAPI Swagger Docs** | `http://localhost:8000/docs` | Interactive OpenAPI 3.0 API Documentation |
 
 ## 🧪 Automated Testing (`pytest`)
-
-The backend telemetry engine includes an automated test suite verifying API endpoints (`/api/targets`, `/api/metrics`, `/api/summary`, `/api/topology`), ping command construction, and cross-platform ICMP regex output parsing (Linux & Windows).
-
-### Run Tests Locally
-From the `backend` directory with your virtual environment activated:
-
+The project features an automated test suite (**16/16 tests passing**):
 ```bash
 cd backend
 pytest -v
 ```
 
-### Run Tests Inside Docker Container
-If running via Docker Compose, execute tests directly inside the running backend container:
+---
 
+# <a id="português"></a>🇧🇷 Documentação em Português
+
+## 🚀 Visão Geral
+O **NetOps Analyzer** é uma plataforma corporativa de observabilidade e detecção de anomalias de rede projetada para monitoramento contínuo de desempenho, telemetria ICMP/SNMP e isolamento automático de instabilidade de conectividade.
+
+Com um painel **Next.js 16 App Router** equipado com Zonas de Confiança e índices preditivos de IA, oferece a Centros de Operações de Rede (NOC) visibilidade instantânea sobre degradação e variação de latência (jitter).
+
+## ✨ Principais Funcionalidades Corporativas
+- **🧠 Motor de IA Scikit-Learn IsolationForest**: Modelo não-supervisionado que analisa séries temporais de latência para prever picos anômalos e calcular o índice de estabilidade global (`global_stability_index`).
+- **⚡ Provas ICMP Assíncronas de Alta Performance**: Disparo contínuo e não-bloqueante para alvos críticos (`Google DNS`, `Cloudflare`, `AWS us-east-1`).
+- **📈 Telemetria em Tempo Real**: Gráficos dinâmicos com desvio padrão e detecção de picos em milissegundos.
+- **🛠️ Command Palette (`Ctrl+K`)**: Comandos rápidos para gerenciamento de alvos e execução de rotinas de diagnóstico.
+
+## 🛠️ Como Usar / Demonstração Rápida
+
+### ⚡ Demonstração Real em 1 Comando (Sem Docker)
+Deseja testar os disparos ICMP assíncronos, o motor Scikit-Learn IsolationForest e a persistência no banco de dados imediatamente?
 ```bash
-docker exec -it netops-analyzer-backend pytest -v
+cd backend
+python run_demo_real.py
+```
+
+### 🐳 Execução Completa via Docker Compose
+Para rodar todo o ecossistema NOC corporativo em contêineres:
+```bash
+docker compose up --build -d
+```
+
+| Serviço | Endereço Local | Descrição |
+| :--- | :--- | :--- |
+| **Painel NOC (Next.js 16)** | `http://localhost:3000` | Telemetria de Rede & Gráficos em Tempo Real |
+| **Documentação da API (Swagger)** | `http://localhost:8000/docs` | Documentação interativa OpenAPI 3.0 |
+
+## 🧪 Suíte de Testes Automatizados (`pytest`)
+O projeto conta com suíte de testes completa (**100% de aprovação - 16/16 testes**):
+```bash
+cd backend
+pytest -v
 ```
 
 ---
 
-## 📄 License
-
-Distributed under the MIT License. Designed for mission-critical enterprise Network Operations Centers.
+## 📄 Licença / License
+Distribuído sob a Licença MIT. Projetado para Centros de Operações de Rede (NOC) e equipes de SRE.
