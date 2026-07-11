@@ -46,41 +46,74 @@ graph TD
 
 ---
 
-## 🛠️ Quick Start (Docker Compose)
+## 🐳 Quick Start (Docker Compose)
 
-Deploy the full enterprise observability suite locally:
+Deploy the complete enterprise observability stack (Next.js 16 App Router frontend + FastAPI telemetry engine) using Docker Compose:
 
 ```bash
 # Clone the repository
 git clone https://github.com/Christophep52/netops-analyzer.git
 cd netops-analyzer
 
-# Launch full stack (Next.js 16 + FastAPI)
+# Build and start services in detached mode
 docker compose up --build -d
+
+# Follow container logs in real time
+docker compose logs -f
+
+# Stop and remove containers when done
+docker compose down
 ```
 
-Access the applications:
-- **Enterprise Observability UI**: `http://localhost:3003`
-- **FastAPI Telemetry Gateway Docs**: `http://localhost:8003/docs`
+### Access Points
+- **Enterprise Observability UI (Next.js)**: `http://localhost:3003`
+- **FastAPI Telemetry Gateway Docs (Swagger UI)**: `http://localhost:8002/docs`
+- **FastAPI ReDoc OpenAPI Spec**: `http://localhost:8002/redoc`
 
 ---
 
 ## 💻 Local Development Setup
 
-### 1. Backend (FastAPI)
+### 1. Backend API (FastAPI)
 ```bash
 cd backend
 python -m venv venv
+
+# Linux / macOS
 source venv/bin/activate
+# Windows PowerShell
+# .\venv\Scripts\Activate.ps1
+
 pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 ```
 
-### 2. Frontend (Next.js 16)
+### 2. Frontend UI (Next.js 16)
 ```bash
 cd frontend-next
 npm install
 npm run dev
+```
+
+---
+
+## 🧪 Automated Testing (`pytest`)
+
+The backend telemetry engine includes an automated test suite verifying API endpoints (`/api/targets`, `/api/metrics`, `/api/summary`, `/api/topology`), ping command construction, and cross-platform ICMP regex output parsing (Linux & Windows).
+
+### Run Tests Locally
+From the `backend` directory with your virtual environment activated:
+
+```bash
+cd backend
+pytest -v
+```
+
+### Run Tests Inside Docker Container
+If running via Docker Compose, execute tests directly inside the running backend container:
+
+```bash
+docker exec -it netops-analyzer-backend pytest -v
 ```
 
 ---

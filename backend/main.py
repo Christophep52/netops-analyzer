@@ -32,8 +32,14 @@ async def lifespan(app: FastAPI):
 
     await init_db()
     task = asyncio.create_task(monitor_loop())
-    yield
-    task.cancel()
+    try:
+        yield
+    finally:
+        task.cancel()
+        try:
+            await task
+        except (asyncio.CancelledError, Exception):
+            pass
 
 app = FastAPI(
     title="NetOps Latency Analyzer API",
@@ -148,12 +154,15 @@ async def simulate_chaos(payload: ChaosPayload):
     target_ip = "10.0.0.1"
     
     for _ in range(15):
-        if random.randint(1, 100) <= intensity:
-            await insert_metric(target_ip, 0.0, "timeout")
-        else:
-            # high latency scaled by intensity
-            latency = 10.0 + (intensity * 5.0) + random.uniform(0, 50)
-            await insert_metric(target_ip, latency, "success")
+        try:
+            if random.randint(1, 100) <= intensity:
+                await insert_metric(target_ip, 0.0, "timeout")
+            else:
+                # high latency scaled by intensity
+                latency = 10.0 + (intensity * 5.0) + random.uniform(0, 50)
+                await insert_metric(target_ip, latency, "sucesso")
+        except Exception:
+            pass
             
     return {"status": "ok", "message": f"Chaos injected with intensity {intensity} for 10.0.0.1"}
 

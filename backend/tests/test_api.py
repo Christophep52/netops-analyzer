@@ -2,7 +2,7 @@ import pytest
 import re
 from fastapi.testclient import TestClient
 from main import app
-from monitor import _build_ping_args, TARGETS
+from monitor import _build_ping_args, TARGETS, ping_target
 
 client = TestClient(app)
 
@@ -66,3 +66,49 @@ def test_get_topology():
     assert "edges" in data
     assert len(data["nodes"]) > 0
     assert len(data["edges"]) > 0
+
+
+@pytest.mark.asyncio
+async def test_ping_target_timeout_handling(monkeypatch):
+    import asyncio
+
+    class FakeProcess:
+        async def communicate(self):
+            return b"", b""
+
+        def kill(self):
+            pass
+
+        async def wait(self):
+            return 0
+
+    async def fake_exec(*args, **kwargs):
+        return FakeProcess()
+
+    async def fake_wait_for(coro, timeout):
+        if hasattr(coro, "close"):
+            coro.close()
+        raise asyncio.TimeoutError()
+
+    monkeypatch.setattr(asyncio, "create_subprocess_exec", fake_exec)
+    monkeypatch.setattr(asyncio, "wait_for", fake_wait_for)
+
+    await ping_target("192.0.2.1")
+
+
+@pytest.mark.asyncio
+async def test_ping_target_exception_handling(monkeypatch):
+    import asyncio
+
+    async def fake_exec(*args, **kwargs):
+        raise OSError("Ping binary not found")
+
+    monkeypatch.setattr(asyncio, "create_subprocess_exec", fake_exec)
+
+    await ping_target("192.0.2.1")
+
+
+def test_simulate_chaos():
+    response = client.post("/api/chaos", json={"intensity": 50})
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"

@@ -22,29 +22,33 @@ def _build_ping_args(ip: str) -> list[str]:
     """Constructs ping command arguments depending on the operating system."""
     sistema = platform.system().lower()
     if sistema == "windows":
-        return ["ping", "-n", "1", "-w", "1000", ip]
+        return ["ping", "-n", "1", "-w", "1000", str(ip)]
     else:
-        return ["ping", "-c", "1", "-W", "1", ip]
+        return ["ping", "-c", "1", "-W", "1", str(ip)]
 
 async def ping_target(ip: str):
     """
     Pings a target IP asynchronously and stores the result.
     Handles timeouts securely and suppresses verbose stack traces.
     """
-    args = _build_ping_args(ip)
     try:
+        args = _build_ping_args(ip)
         process = await asyncio.create_subprocess_exec(
             *args, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
         )
         try:
             stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=3.0)
-        except asyncio.TimeoutError:
+        except (asyncio.TimeoutError, TimeoutError):
             try:
                 process.kill()
+                await process.wait()
             except Exception:
                 pass
-            await insert_metric(ip, 0.0, "timeout")
-            await insert_latency_history(ip, 0.0)
+            try:
+                await insert_metric(ip, 0.0, "timeout")
+                await insert_latency_history(ip, 0.0)
+            except Exception as db_err:
+                logger.error(f"Error recording timeout metric for {ip}: {str(db_err)}")
             return
 
         output = stdout.decode('utf-8', errors='ignore')
@@ -52,15 +56,30 @@ async def ping_target(ip: str):
             match = re.search(r"(?:time|tempo)[=<]([\d\.]+)\s*ms", output, re.IGNORECASE)
             if match:
                 latency = float(match.group(1))
-                await insert_metric(ip, latency, "sucesso")
-                await insert_latency_history(ip, latency)
+                try:
+                    await insert_metric(ip, latency, "sucesso")
+                    await insert_latency_history(ip, latency)
+                except Exception as db_err:
+                    logger.error(f"Error recording success metric for {ip}: {str(db_err)}")
                 return
-        await insert_metric(ip, 0.0, "timeout")
-        await insert_latency_history(ip, 0.0)
+        try:
+            await insert_metric(ip, 0.0, "timeout")
+            await insert_latency_history(ip, 0.0)
+        except Exception as db_err:
+            logger.error(f"Error recording timeout metric for {ip}: {str(db_err)}")
+    except (asyncio.TimeoutError, TimeoutError):
+        try:
+            await insert_metric(ip, 0.0, "timeout")
+            await insert_latency_history(ip, 0.0)
+        except Exception as db_err:
+            logger.error(f"Error recording timeout metric for {ip}: {str(db_err)}")
     except Exception as e:
         logger.error(f"Error pinging {ip}: {str(e)}")
-        await insert_metric(ip, 0.0, "erro")
-        await insert_latency_history(ip, 0.0)
+        try:
+            await insert_metric(ip, 0.0, "erro")
+            await insert_latency_history(ip, 0.0)
+        except Exception as db_err:
+            logger.error(f"Database error while recording failure for {ip}: {str(db_err)}")
 
 async def monitor_loop():
     """
@@ -71,7 +90,10 @@ async def monitor_loop():
     while True:
         try:
             tasks = [ping_target(t["ip"]) for t in TARGETS]
-            await asyncio.gather(*tasks)
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            for res in results:
+                if isinstance(res, Exception):
+                    logger.error(f"Unhandled exception in ping_target: {res}")
             loop_count += 1
             if loop_count >= 120:  # Roughly every 10 minutes
                 try:
@@ -80,6 +102,9 @@ async def monitor_loop():
                     logger.error(f"Error during cleanup: {str(e)}")
                 loop_count = 0
             await asyncio.sleep(5)
+        except asyncio.CancelledError:
+            logger.info("Monitor loop cancelled.")
+            break
         except Exception as e:
             logger.error(f"Error in monitor loop: {str(e)}")
             await asyncio.sleep(5)
