@@ -46,8 +46,16 @@ graph TD
 
 ---
 
-## 🐳 Quick Start (Docker Compose)
+## 🛠️ Quick Start & Live Demo
 
+### ⚡ 1-Command Live Integrated Demo (Instant Test)
+Want to test the Async ICMP Probes, Scikit-Learn IsolationForest Anomaly Engine & SQLite DB immediately?
+```bash
+cd backend
+python run_demo_real.py
+```
+
+### 🐳 Full Enterprise Stack (Docker Compose)
 Deploy the complete enterprise observability stack (Next.js 16 App Router frontend + FastAPI telemetry engine) using Docker Compose:
 
 ```bash
