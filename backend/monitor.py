@@ -7,16 +7,17 @@ from database import insert_metric, cleanup_old_metrics, insert_latency_history
 logger = logging.getLogger(__name__)
 
 TARGETS = [
-    {"ip": "8.8.8.8",         "label": "Google DNS (Primario)"},
-    {"ip": "8.8.4.4",         "label": "Google DNS (Secundario)"},
-    {"ip": "1.1.1.1",         "label": "Cloudflare DNS (Primario)"},
-    {"ip": "1.0.0.1",         "label": "Cloudflare DNS (Secundario)"},
-    {"ip": "9.9.9.9",         "label": "Quad9 DNS"},
-    {"ip": "208.67.222.222",  "label": "OpenDNS (Cisco)"},
-    {"ip": "8.26.56.26",      "label": "Comodo Secure DNS"},
-    {"ip": "94.140.14.14",    "label": "AdGuard DNS"},
-    {"ip": "3.218.180.0",     "label": "AWS us-east-1"},
+    {"ip": "8.8.8.8", "label": "Google DNS (Primario)"},
+    {"ip": "8.8.4.4", "label": "Google DNS (Secundario)"},
+    {"ip": "1.1.1.1", "label": "Cloudflare DNS (Primario)"},
+    {"ip": "1.0.0.1", "label": "Cloudflare DNS (Secundario)"},
+    {"ip": "9.9.9.9", "label": "Quad9 DNS"},
+    {"ip": "208.67.222.222", "label": "OpenDNS (Cisco)"},
+    {"ip": "8.26.56.26", "label": "Comodo Secure DNS"},
+    {"ip": "94.140.14.14", "label": "AdGuard DNS"},
+    {"ip": "3.218.180.0", "label": "AWS us-east-1"},
 ]
+
 
 def _build_ping_args(ip: str) -> list[str]:
     """Constructs ping command arguments depending on the operating system."""
@@ -25,6 +26,7 @@ def _build_ping_args(ip: str) -> list[str]:
         return ["ping", "-n", "1", "-w", "1000", str(ip)]
     else:
         return ["ping", "-c", "1", "-W", "1", str(ip)]
+
 
 async def ping_target(ip: str):
     """
@@ -51,16 +53,20 @@ async def ping_target(ip: str):
                 logger.error(f"Error recording timeout metric for {ip}: {str(db_err)}")
             return
 
-        output = stdout.decode('utf-8', errors='ignore')
+        output = stdout.decode("utf-8", errors="ignore")
         if process.returncode == 0:
-            match = re.search(r"(?:time|tempo)[=<]([\d\.]+)\s*ms", output, re.IGNORECASE)
+            match = re.search(
+                r"(?:time|tempo)[=<]([\d\.]+)\s*ms", output, re.IGNORECASE
+            )
             if match:
                 latency = float(match.group(1))
                 try:
                     await insert_metric(ip, latency, "sucesso")
                     await insert_latency_history(ip, latency)
                 except Exception as db_err:
-                    logger.error(f"Error recording success metric for {ip}: {str(db_err)}")
+                    logger.error(
+                        f"Error recording success metric for {ip}: {str(db_err)}"
+                    )
                 return
         try:
             await insert_metric(ip, 0.0, "timeout")
@@ -79,7 +85,10 @@ async def ping_target(ip: str):
             await insert_metric(ip, 0.0, "erro")
             await insert_latency_history(ip, 0.0)
         except Exception as db_err:
-            logger.error(f"Database error while recording failure for {ip}: {str(db_err)}")
+            logger.error(
+                f"Database error while recording failure for {ip}: {str(db_err)}"
+            )
+
 
 async def monitor_loop():
     """

@@ -8,10 +8,11 @@ from database import init_db, insert_metric, get_recent_metrics, get_summary
 from monitor import ping_target
 from ml_engine import analyze_network_anomalies
 
+
 async def run_real_test():
-    print("="*75)
+    print("=" * 75)
     print("TESTE REAL E INTEGRADO DO NETOPS ANALYZER (ICMP PING + ML ISOLATION FOREST)")
-    print("="*75)
+    print("=" * 75)
 
     # 1. Inicializa o banco SQLite assíncrono real
     await init_db()
@@ -29,8 +30,18 @@ async def run_real_test():
         print("OK!")
 
     # 2. Vamos alimentar métricas realísticas com anomalia para testar o Motor de Inteligência Artificial ML
-    print("\n[*] Etapa 2: Injetando série temporal de latência com pico anômalo para teste do Motor ML...")
-    serie_temporal = [14.2, 15.0, 14.8, 15.5, 14.9, 15.2, 182.4] # 182.4ms = Pico Anômalo
+    print(
+        "\n[*] Etapa 2: Injetando série temporal de latência com pico anômalo para teste do Motor ML..."
+    )
+    serie_temporal = [
+        14.2,
+        15.0,
+        14.8,
+        15.5,
+        14.9,
+        15.2,
+        182.4,
+    ]  # 182.4ms = Pico Anômalo
     for val in serie_temporal:
         await insert_metric("8.8.8.8", val, "sucesso")
 
@@ -48,19 +59,26 @@ async def run_real_test():
     resultado_ml = analyze_network_anomalies(summary_data, grouped_metrics)
 
     print(f"    --> Motor Utilizado       : {resultado_ml['model_architecture']}")
-    print(f"    --> Índice de Estabilidade: {resultado_ml['global_stability_index']:.1f}/100")
+    print(
+        f"    --> Índice de Estabilidade: {resultado_ml['global_stability_index']:.1f}/100"
+    )
     print(f"    --> Anomalias Detectadas  : {resultado_ml['total_anomalies_detected']}")
 
-    if resultado_ml['insights']:
+    if resultado_ml["insights"]:
         print("    --> Análise Preditiva e Insights do IsolationForest:")
-        for ins in resultado_ml['insights']:
-            print(f"        • [ALVO: {ins['target_ip']}] Status: {ins['anomaly_status']}")
-            print(f"          Latência Atual: {ins['latest_latency']}ms | Média Histórica: {ins['mean_latency']}ms")
+        for ins in resultado_ml["insights"]:
+            print(
+                f"        • [ALVO: {ins['target_ip']}] Status: {ins['anomaly_status']}"
+            )
+            print(
+                f"          Latência Atual: {ins['latest_latency']}ms | Média Histórica: {ins['mean_latency']}ms"
+            )
             print(f"          Tendência Preditiva: {ins['trend_prediction']}")
 
-    print("\n" + "="*75)
+    print("\n" + "=" * 75)
     print("TESTE REAL DO NETOPS ANALYZER CONCLUÍDO COM 100% DE SUCESSO!")
-    print("="*75)
+    print("=" * 75)
+
 
 if __name__ == "__main__":
     asyncio.run(run_real_test())
