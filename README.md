@@ -41,6 +41,9 @@ Featuring a **Next.js 16 App Router** dashboard equipped with AI Anomaly Confide
 Want to test the Async ICMP Probes, Scikit-Learn IsolationForest Anomaly Engine & SQLite DB immediately without Docker?
 ```bash
 cd backend
+python -m venv venv
+# Windows: venv\Scripts\activate | Linux/Mac: source venv/bin/activate
+pip install -r requirements.txt
 python run_demo_real.py
 ```
 
@@ -59,6 +62,7 @@ docker compose up --build -d
 The project features an automated test suite (**16/16 tests passing**):
 ```bash
 cd backend
+# Ensure virtual environment is activated and dependencies are installed
 pytest -v
 ```
 
@@ -83,6 +87,9 @@ Com um painel **Next.js 16 App Router** equipado com Zonas de Confiança e índi
 Deseja testar os disparos ICMP assíncronos, o motor Scikit-Learn IsolationForest e a persistência no banco de dados imediatamente?
 ```bash
 cd backend
+python -m venv venv
+# Windows: venv\Scripts\activate | Linux/Mac: source venv/bin/activate
+pip install -r requirements.txt
 python run_demo_real.py
 ```
 
@@ -101,6 +108,7 @@ docker compose up --build -d
 O projeto conta com suíte de testes completa (**100% de aprovação - 16/16 testes**):
 ```bash
 cd backend
+# Certifique-se de que o ambiente virtual (venv) está ativo
 pytest -v
 ```
 

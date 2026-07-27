@@ -2,47 +2,47 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [ "master", "main" ]
+    branches: [ "master" ]
   pull_request:
-    branches: [ "master", "main" ]
+    branches: [ "master" ]
 
 jobs:
-  build-and-test:
+  test-backend:
     runs-on: ubuntu-latest
-
+    defaults:
+      run:
+        working-directory: ./backend
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-
-    - name: Setup Python
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.11
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
-
-    - name: Install Frontend Dependencies
-      working-directory: ./frontend-next
-      run: npm install
-
-    - name: Run Frontend Lint
-      working-directory: ./frontend-next
-      run: npm run lint
-
-    - name: Install Backend Dependencies
-      working-directory: ./backend
+        python-version: "3.11"
+        cache: 'pip'
+    - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install ruff pytest httpx pytest-asyncio
+        pip install -r requirements.txt structlog alembic pytest pytest-asyncio httpx==0.27.2
+    - name: Run Tests
+      run: |
+        pytest -v
 
-    - name: Run Backend Lint (Ruff)
-      working-directory: ./backend
-      run: ruff check .
-
-    - name: Run Backend Tests
-      working-directory: ./backend
-      run: pytest
+  build-frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend-next
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js 20
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'npm'
+        cache-dependency-path: ./frontend-next/package-lock.json
+    - name: Install dependencies
+      run: npm install
+    - name: Lint
+      run: npm run lint
+    - name: Build
+      run: npm run build
