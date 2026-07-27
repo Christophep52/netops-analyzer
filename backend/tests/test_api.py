@@ -1,8 +1,9 @@
 import pytest
 import re
-from fastapi.testclient import TestClient
 import unittest.mock as mock
 mock.patch("main.monitor_loop", side_effect=lambda: None).start()
+from main import app
+from monitor import _build_ping_args, TARGETS, ping_target
 
 client = TestClient(app)
 
