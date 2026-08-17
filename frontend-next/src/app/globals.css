@@ -714,3 +714,18 @@ body {
     display: none;
   }
 }
+
+@media (max-width: 640px) {
+  .stats-row {
+    grid-template-columns: 1fr;
+  }
+  .main-content {
+    padding: 12px;
+  }
+  .header {
+    padding: 0 12px;
+  }
+  .logo span {
+    display: none;
+  }
+}
