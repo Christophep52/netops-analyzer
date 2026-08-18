@@ -76,7 +76,9 @@ def analyze_network_anomalies(
             confidence_zone = max(0.0, min(100.0, 100.0 - (abs(iso_score) * 40)))
 
             # Índice de estabilidade global do host
-            loss_rate = 1.0 - (item["successful"] / max(1, item["total_pings"]))
+            successful = item.get("successful") or 0
+            total_pings = max(1, item.get("total_pings") or 1)
+            loss_rate = max(0.0, 1.0 - (successful / total_pings))
             stability = max(
                 0.0, min(100.0, 100.0 - (std_dev * 1.5) - (loss_rate * 50.0))
             )

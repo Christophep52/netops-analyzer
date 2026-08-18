@@ -263,6 +263,7 @@ async def export_pdf():
         y -= 20
         if y < 50:
             p.showPage()
+            p.setFont("Helvetica", 12)
             y = 750
 
     p.save()

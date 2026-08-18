@@ -56,7 +56,7 @@ async def ping_target(ip: str):
         output = stdout.decode("utf-8", errors="ignore")
         if process.returncode == 0:
             match = re.search(
-                r"(?:time|tempo)[=<]([\d\.]+)\s*ms", output, re.IGNORECASE
+                r"(?:time|tempo|temps|zeit)[=<\s:]+([\d\.]+)\s*ms", output, re.IGNORECASE
             )
             if match:
                 latency = float(match.group(1))

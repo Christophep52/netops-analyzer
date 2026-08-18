@@ -86,11 +86,11 @@ async def get_summary():
             SELECT
                 target_ip,
                 COUNT(*) as total_pings,
-                SUM(CASE WHEN status = 'sucesso' THEN 1 ELSE 0 END) as successful,
-                ROUND(AVG(CASE WHEN status = 'sucesso' THEN latency_ms END), 2) as avg_latency,
-                ROUND(MIN(CASE WHEN status = 'sucesso' THEN latency_ms END), 2) as min_latency,
-                ROUND(MAX(CASE WHEN status = 'sucesso' THEN latency_ms END), 2) as max_latency,
-                ROUND(CAST(SUM(CASE WHEN latency_ms = 0 THEN 1 ELSE 0 END) AS FLOAT) * 100 / COUNT(*), 2) as packet_loss_percentage
+                COALESCE(SUM(CASE WHEN status = 'sucesso' THEN 1 ELSE 0 END), 0) as successful,
+                COALESCE(ROUND(AVG(CASE WHEN status = 'sucesso' THEN latency_ms END), 2), 0.0) as avg_latency,
+                COALESCE(ROUND(MIN(CASE WHEN status = 'sucesso' THEN latency_ms END), 2), 0.0) as min_latency,
+                COALESCE(ROUND(MAX(CASE WHEN status = 'sucesso' THEN latency_ms END), 2), 0.0) as max_latency,
+                COALESCE(ROUND(CAST(SUM(CASE WHEN status = 'falha' OR latency_ms = 0 THEN 1 ELSE 0 END) AS FLOAT) * 100 / MAX(1, COUNT(*)), 2), 0.0) as packet_loss_percentage
             FROM metrics
             GROUP BY target_ip
         """)
